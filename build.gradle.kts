@@ -20,6 +20,7 @@ val javaFloor = 17
 
 subprojects {
     apply(plugin = "java-library")
+    apply(plugin = "maven-publish")
 
     group = "dev.dokimi"
     version = "0.1.0"
@@ -41,7 +42,20 @@ subprojects {
         )
     }
 
+    // The artifact says it runs on Java 17, and compiling against the
+    // 17 API is not the same as running there. Pass -Ptest.jvm=17 to
+    // run the tests on a JDK of that version; CI does.
+    val testJvm = providers.gradleProperty("test.jvm").orNull
+    val toolchains = extensions.getByType<JavaToolchainService>()
+
     tasks.withType<Test>().configureEach {
+        if (testJvm != null) {
+            javaLauncher.set(
+                toolchains.launcherFor {
+                    languageVersion.set(JavaLanguageVersion.of(testJvm))
+                },
+            )
+        }
         useJUnitPlatform()
         testLogging {
             events("failed")
@@ -52,6 +66,14 @@ subprojects {
     // doclint with missing left on: a public member with no comment,
     // a parameter with no @param and a dead [reference] all fail the
     // build. That is what stops the documentation rotting quietly.
+    extensions.configure<PublishingExtension> {
+        publications {
+            create<MavenPublication>("library") {
+                from(components["java"])
+            }
+        }
+    }
+
     tasks.withType<Javadoc>().configureEach {
         (options as StandardJavadocDocletOptions).apply {
             addStringOption("Xdoclint:all", "-quiet")

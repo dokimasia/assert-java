@@ -1,0 +1,28 @@
+{
+  "languages": {
+    "Java": {
+      "format_on_save": "on",
+      "preferred_line_length": 100,
+      "tab_size": 2
+    },
+    "Kotlin": {
+      "format_on_save": "on",
+      "preferred_line_length": 100,
+      "tab_size": 4
+    }
+  },
+  "lsp": {
+    "jdtls": {
+      "settings": {
+        "java": {
+          "format": { "settings": { "profile": "GoogleStyle" } },
+          "compile": { "nullAnalysis": { "mode": "automatic" } },
+          "configuration": { "runtimes": [] }
+        }
+      }
+    }
+  },
+  "file_types": {
+    "JSON": ["assert-core/src/test/resources/**/*.json"]
+  }
+}

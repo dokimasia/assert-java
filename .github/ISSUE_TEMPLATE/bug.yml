@@ -1,0 +1,104 @@
+name: Bug report
+description: An assertion does not do what it says.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, three things that are usually not bugs:
+
+        - **`Integer` not equalling `Long`.** The standard says values
+          of different types never compare, so `1` does not equal `1L`
+          and neither equals `1.0`.
+        - **NaN not equalling itself.** `Double.equals` says it does;
+          IEEE 754 says it does not, and this follows IEEE 754. Pass
+          `Option.EQUATE_NANS` where you want the other answer.
+        - **An empty collection not equalling an absent one.** Pass
+          `Option.EQUATE_EMPTY` where that difference does not matter.
+
+  - type: dropdown
+    id: artifact
+    attributes:
+      label: Which artifact
+      options:
+        - assert-core (Java)
+        - assert-kotlin (coroutines)
+        - both
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: dev.dokimi:assert-core:0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: java
+    attributes:
+      label: Java version
+      description: Output of `java -version`. The floor is 17.
+      placeholder: openjdk 21.0.5
+    validations:
+      required: true
+
+  - type: dropdown
+    id: seat
+    attributes:
+      label: Which seat
+      description: >
+        Which seat you hold decides what each surface does, so it is
+        usually the answer when a failure appears in the wrong place.
+      options:
+        - SeatExtension (Collector)
+        - Collector, constructed myself
+        - Standard
+        - Recorder
+        - One of my own
+        - not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface
+      options:
+        - Check (throws)
+        - Soft (collects and continues)
+        - both
+        - not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: A test that shows it
+      description: >
+        A whole test, please. Use a `Recorder` where you want to read a
+        failure back rather than suffer it.
+      render: java
+      value: |
+        @Test
+        void reproduces() {
+          Recorder seat = new Recorder();
+
+          Check.equal(seat, got, want, "the contract under test");
+
+          System.out.println(seat.message());
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened
+      description: >
+        Both, please. "It fails" does not say whether the assertion
+        reported the wrong thing or reported nothing at all.
+    validations:
+      required: true

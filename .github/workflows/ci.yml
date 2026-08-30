@@ -1,0 +1,100 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 23 is the floor for building, because Markdown doc comments
+        # need that javadoc. The artifact targets 17 either way, and
+        # the run-on job below tests it there.
+        java: ["23", "25"]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build, test and document
+        run: ./gradlew build --no-daemon
+
+  # The artifact says it runs on Java 17. Compiling against the 17 API
+  # is not the same as running there, so run the tests on a real 17.
+  run-on-the-floor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Test on the declared floor
+        run: |
+          ./gradlew test --no-daemon \
+            -Dorg.gradle.java.installations.auto-detect=true \
+            -Ptest.jvm=17
+
+  # A published jar that does not resolve is still broken, whatever the
+  # build said.
+  consume:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Publish to a local repository and resolve from it
+        run: |
+          ./gradlew publishToMavenLocal --no-daemon
+          mkdir -p /tmp/consumer && cd /tmp/consumer
+          cat > build.gradle.kts <<'EOF'
+          plugins { java }
+          repositories { mavenLocal(); mavenCentral() }
+          dependencies { implementation("dev.dokimi:assert-core:0.1.0") }
+          EOF
+          cat > settings.gradle.kts <<'EOF'
+          rootProject.name = "consumer"
+          EOF
+          mkdir -p src/main/java
+          cat > src/main/java/Consume.java <<'EOF'
+          import dev.dokimi.assertion.Check;
+          import dev.dokimi.assertion.Recorder;
+
+          public class Consume {
+            public static void main(String[] args) {
+              Recorder seat = new Recorder();
+              Check.equal(seat, 1, 2, "the package works");
+              if (!seat.failed()) {
+                throw new IllegalStateException("the assertion reported nothing");
+              }
+              System.out.println("resolved and ran: " + seat.message());
+            }
+          }
+          EOF
+          gradle --no-daemon -q build
+          echo "the published artifact resolves and compiles"

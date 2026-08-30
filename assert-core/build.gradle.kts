@@ -5,6 +5,11 @@ dependencies {
     // what makes this usable from Kotlin without platform types.
     api(libs.jspecify)
 
+    // compileOnly: the JUnit extension is optional, and a consumer
+    // on another framework should not inherit JUnit for it.
+    compileOnly(platform(libs.junit.bom))
+    compileOnly(libs.junit.jupiter.api)
+
     // Test-only: the published artifact carries no runtime dependency.
     testImplementation(libs.jackson.databind)
     testImplementation(platform(libs.junit.bom))
