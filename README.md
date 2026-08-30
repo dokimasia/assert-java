@@ -87,8 +87,9 @@ AssertionFailed: 2 failures:
 
 ## The assertions
 
-Thirty-four on both surfaces, plus three for golden files and four on
-the benchmark contract.
+Thirty-four on `Check` and thirty-three on `Soft`, since only `Check`
+can drive an assertion to failure. Three more compare against a golden
+file, and the benchmark contract states three ceilings.
 
 <!-- api-reference:start -->
 
@@ -143,12 +144,6 @@ Check.closeTo(Seat seat, Object got, double want, double tolerance, String msg)
 Check.inRange(Seat seat, Object got, double low, double high, String msg)
 ```
 
-**Ordering** — Sorted, unique, and anything else that holds between neighbours.
-
-```java
-Check.pairwise(Seat seat, List<T> items, BiPredicate<T, T> predicate, String msg)
-```
-
 **Errors** — For code that hands an exception back. Matching follows the cause chain.
 
 ```java
@@ -166,32 +161,38 @@ Check.throwsException(Seat seat, Raises.Body body, String msg) -> @Nullable Thro
 Check.doesNotThrow(Seat seat, Raises.Body body, String msg)
 ```
 
+**Ordering** — Sorted, unique, and anything else that holds between neighbours.
+
+```java
+Check.pairwise(Seat seat, List<T> items, BiPredicate<T, T> predicate, String msg)
+```
+
 **Cancellation** — Interruption is Java's cancellation: what sleep, wait and take respond to.
 
 ```java
 Check.honoursCancellation(Seat seat, Behaviour.Cancellable body, String msg)
-Check.honoursDeadline(seat: Seat, Behaviour.Cancellable body, String msg)
-Check.completesWithin(seat: Seat, Duration within, Raises.Body body, String msg)
-Check.nullHandleSafe(Seat seat, Consumer<Object> body, String msg)
+Check.honoursDeadline(Seat seat, Behaviour.Cancellable body, String msg)
+Check.completesWithin(Seat seat, Duration within, Raises.Body body, String msg)
+```
+
+**Purity and a missing handle** — What observe answers defines what nothing means.
+
+```java
+Check.isPure(Seat seat, Callable<Object> observe, Raises.Body body, String msg, Option... options)
+Check.nullHandleSafe(Seat seat, Behaviour.Handled body, String msg)
 ```
 
 **Retrying** — For a condition something outside the test makes true. Both spend real time.
 
 ```java
-Check.eventually(seat: Seat, Duration timeout, Duration interval, Consumer<Seat> body, String msg)
-Check.eventuallyTrue(seat: Seat, Duration timeout, BooleanSupplier predicate, String msg)
+Check.eventually(Seat seat, Duration timeout, Duration interval, Consumer<Seat> body, String msg)
+Check.eventuallyTrue(Seat seat, Duration timeout, BooleanSupplier predicate, String msg)
 ```
 
-**Concurrency** — Diffs the live non-daemon threads either side of the scope.
+**Concurrency** — Reads the live non-daemon threads either side of the scope.
 
 ```java
-Check.noTaskLeaks(seat: Seat, String msg) -> Runnable
-```
-
-**Purity** — What observe answers defines what nothing means.
-
-```java
-Check.isPure(Seat seat, Callable<Object> observe, Raises.Body body, String msg, Option... options)
+Check.noTaskLeaks(Seat seat, String msg) -> Runnable
 ```
 
 **Testing an assertion** — On Check only: Soft cannot drive a check to failure.
@@ -216,6 +217,7 @@ Golden.matchJsonField(Seat seat, Path path, String field, String got, boolean up
 **Benchmark ceilings** — chained onto one contract.
 
 ```java
+new Contract(Seat seat, String msg)
 Contract.maxLatency(Duration ceiling) -> Contract
 Contract.maxMean(Duration ceiling) -> Contract
 Contract.maxBytes(long ceiling) -> Contract
@@ -223,7 +225,7 @@ Contract.loop(int iterations, Raises.Body body) -> Contract
 Contract.check() -> void
 ```
 
-**Coroutines** — from `dokimi-assert-kotlin`, for the seven a Java signature
+**Coroutines** — from `dokimi-assert-kotlin`, for the six a Java signature
 cannot reach.
 
 ```kotlin
@@ -262,8 +264,8 @@ else.
 
 ## Kotlin
 
-Kotlin calls the Java artifact for thirty-four of the forty-one. The
-other seven are concurrency-shaped, and a Kotlin `suspend` lambda
+Kotlin calls the Java artifact for thirty-five of the forty-one. The
+other six take work that suspends, and a Kotlin `suspend` lambda
 compiles to a method taking a hidden `Continuation`, so no Java method
 can accept one. `dokimi-assert-kotlin` supplies those:
 
@@ -320,14 +322,24 @@ declares a checked exception.
 ## Development
 
 ```sh
-./gradlew build     # compile, test, document, jar
+./gradlew build           # compile, test, document, jar
 ./gradlew test
 ./gradlew javadoc
+./gradlew centralBundle   # both artifacts as one Maven Central bundle
 ```
 
 Building needs JDK 23 or newer, because the doc comments are Markdown
 and older javadoc reads `///` as an ordinary comment. The artifact
 targets Java 17 regardless, and CI runs the tests on a real 17.
+
+Pushing a `v*` tag builds a signed bundle and uploads it to the Central
+Portal, which validates it and waits for someone to release it. The
+build signs only when `SIGNING_KEY` and `SIGNING_PASSWORD` are in the
+environment, so an ordinary build needs no key.
+
+[docs/rfc/0001](docs/rfc/0001-the-java-implementation.md) records what
+Java does differently from the other implementations of this standard,
+and why.
 
 ## Licence
 

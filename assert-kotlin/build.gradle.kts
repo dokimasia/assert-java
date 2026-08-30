@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
 }
 
-description = "Coroutine-aware assertions, for the seven a Java signature cannot reach"
+description = "Coroutine-aware assertions, for the six a Java signature cannot reach"
 
 dependencies {
     api(project(":assert-core"))
@@ -21,3 +21,8 @@ kotlin {
         allWarningsAsErrors.set(true)
     }
 }
+
+// The javadoc jar this module publishes holds nothing but a manifest.
+// javadoc does not read Kotlin, and Maven Central wants the file
+// present whatever is in it. The KDoc ships in the sources jar, which
+// is what an IDE reads for a Kotlin dependency anyway.
