@@ -5,7 +5,10 @@ dependencies {
     // what makes this usable from Kotlin without platform types.
     api(libs.jspecify)
 
+    // Test-only: the published artifact carries no runtime dependency.
+    testImplementation(libs.jackson.databind)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.params)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
