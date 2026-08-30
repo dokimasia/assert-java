@@ -20,7 +20,6 @@ import java.util.function.Consumer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-
 /// Assertions that stop the test at the first failure.
 ///
 /// Every assertion takes a seat first and a message last. The message states the
@@ -33,6 +32,10 @@ import org.jspecify.annotations.Nullable;
 ///
 /// [Soft] carries the same assertions under the same names and runs the same
 /// comparison. Only what happens on failure differs.
+///
+/// The members are grouped by family, in the order the other implementations of this
+/// standard use: values, sizes, containment, text, numbers, errors, throwing, ordering,
+/// behaviour and waiting.
 @NullMarked
 public final class Check {
 
@@ -53,7 +56,8 @@ public final class Check {
   /// @param want the value it is supposed to produce
   /// @param msg the contract under test
   /// @param options relaxations for this call alone
-  public static void equal(Seat seat, @Nullable Object got, @Nullable Object want, String msg, Option... options) {
+  public static void equal(
+      Seat seat, @Nullable Object got, @Nullable Object want, String msg, Option... options) {
     seat.helper();
     Values.equal(seat, MODE, got, want, msg, options);
   }
@@ -68,7 +72,8 @@ public final class Check {
   /// @param want the value it must not equal
   /// @param msg the contract under test
   /// @param options relaxations for this call alone
-  public static void notEqual(Seat seat, @Nullable Object got, @Nullable Object want, String msg, Option... options) {
+  public static void notEqual(
+      Seat seat, @Nullable Object got, @Nullable Object want, String msg, Option... options) {
     seat.helper();
     Values.notEqual(seat, MODE, got, want, msg, options);
   }
@@ -165,7 +170,12 @@ public final class Check {
   /// @param needle the element, key or substring to find
   /// @param msg the contract under test
   /// @param options relaxations for this call alone
-  public static void contains(Seat seat, @Nullable Object haystack, @Nullable Object needle, String msg, Option... options) {
+  public static void contains(
+      Seat seat,
+      @Nullable Object haystack,
+      @Nullable Object needle,
+      String msg,
+      Option... options) {
     seat.helper();
     Containment.contains(seat, MODE, haystack, needle, msg, options);
   }
@@ -177,7 +187,12 @@ public final class Check {
   /// @param needle what must be absent
   /// @param msg the contract under test
   /// @param options relaxations for this call alone
-  public static void notContains(Seat seat, @Nullable Object haystack, @Nullable Object needle, String msg, Option... options) {
+  public static void notContains(
+      Seat seat,
+      @Nullable Object haystack,
+      @Nullable Object needle,
+      String msg,
+      Option... options) {
     seat.helper();
     Containment.notContains(seat, MODE, haystack, needle, msg, options);
   }
@@ -191,7 +206,8 @@ public final class Check {
   /// @param got the text to search
   /// @param needles the substrings, in the order they must appear
   /// @param msg the contract under test
-  public static void containsInOrder(Seat seat, @Nullable Object got, String[] needles, String msg) {
+  public static void containsInOrder(
+      Seat seat, @Nullable Object got, String[] needles, String msg) {
     seat.helper();
     Containment.containsInOrder(seat, MODE, got, needles, msg);
   }
@@ -243,7 +259,8 @@ public final class Check {
   /// @param want the number it should be near
   /// @param tolerance the largest acceptable absolute difference
   /// @param msg the contract under test
-  public static void closeTo(Seat seat, @Nullable Object got, double want, double tolerance, String msg) {
+  public static void closeTo(
+      Seat seat, @Nullable Object got, double want, double tolerance, String msg) {
     seat.helper();
     Numbers.closeTo(seat, MODE, got, want, tolerance, msg);
   }
@@ -258,7 +275,8 @@ public final class Check {
   /// @param low the lowest acceptable value
   /// @param high the highest acceptable value
   /// @param msg the contract under test
-  public static void inRange(Seat seat, @Nullable Object got, double low, double high, String msg) {
+  public static void inRange(
+      Seat seat, @Nullable Object got, double low, double high, String msg) {
     seat.helper();
     Numbers.inRange(seat, MODE, got, low, high, msg);
   }
@@ -311,6 +329,36 @@ public final class Check {
     Errors.errorIsNot(seat, MODE, error, target, msg);
   }
 
+  /// Fail when no error of the given class is in the chain.
+  ///
+  /// Use it to read fields off a specific type rather than parsing its message.
+  ///
+  /// @param <E> the class of error looked for
+  /// @param seat where the failure is reported
+  /// @param error the error to inspect
+  /// @param want the class to look for
+  /// @param msg the contract under test
+  /// @return the matching error, so its fields can be read, or null when nothing matched
+  public static <E extends Throwable> @Nullable E errorAs(
+      Seat seat, @Nullable Throwable error, Class<E> want, String msg) {
+    seat.helper();
+    return Errors.errorAs(seat, MODE, error, want, msg);
+  }
+
+  /// Fail when the body does not throw.
+  ///
+  /// throws is a Java keyword, which is why this is not called that. Any Throwable
+  /// counts, including an Error; where the type matters, assert on what is returned.
+  ///
+  /// @param seat where the failure is reported
+  /// @param body the work under test
+  /// @param msg the contract under test
+  /// @return what the body threw, or null when it returned
+  public static @Nullable Throwable throwsException(Seat seat, Raises.Body body, String msg) {
+    seat.helper();
+    return Raises.throwsException(seat, MODE, body, msg);
+  }
+
   /// Fail when the body throws.
   ///
   /// @param seat where the failure is reported
@@ -319,6 +367,23 @@ public final class Check {
   public static void doesNotThrow(Seat seat, Raises.Body body, String msg) {
     seat.helper();
     Raises.doesNotThrow(seat, MODE, body, msg);
+  }
+
+  /// Fail when an adjacent pair does not satisfy the predicate.
+  ///
+  /// Nought or one item passes, since neither has a pair. One assertion rather than
+  /// sorted, unique and strictly increasing, because each of those is a relation between
+  /// neighbours.
+  ///
+  /// @param <T> what the sequence holds
+  /// @param seat where the failure is reported
+  /// @param items the sequence to walk
+  /// @param predicate called with the earlier item and the later one
+  /// @param msg the contract under test
+  public static <T> void pairwise(
+      Seat seat, List<T> items, BiPredicate<T, T> predicate, String msg) {
+    seat.helper();
+    Order.pairwise(seat, MODE, items, predicate, msg);
   }
 
   /// Fail when a subject told to stop does not.
@@ -362,6 +427,27 @@ public final class Check {
     Behaviour.completesWithin(seat, MODE, within, body, msg);
   }
 
+  /// Fail when the body changes what observe reads.
+  ///
+  /// What observe answers defines what nothing means: whatever it leaves out, the body is
+  /// free to change. Answer a copy, because a projection sharing memory with the subject
+  /// reads the same object twice and passes whatever the body did.
+  ///
+  /// @param seat where the failure is reported
+  /// @param observe read before and after the body
+  /// @param body the call that must change nothing observed
+  /// @param msg the contract under test
+  /// @param options relaxations for this call alone
+  public static void isPure(
+      Seat seat,
+      Callable<@Nullable Object> observe,
+      Raises.Body body,
+      String msg,
+      Option... options) {
+    seat.helper();
+    Behaviour.isPure(seat, MODE, observe, body, msg, options);
+  }
+
   /// Fail when a subject given no cancellation handle crashes.
   ///
   /// Throwing an exception of its own is fine and is usually right. What fails here is
@@ -375,22 +461,6 @@ public final class Check {
     Behaviour.nullHandleSafe(seat, MODE, body, msg);
   }
 
-  /// Fail when the body changes what observe reads.
-  ///
-  /// What observe answers defines what nothing means: whatever it leaves out, the body is
-  /// free to change. Answer a copy, because a projection sharing memory with the subject
-  /// reads the same object twice and passes whatever the body did.
-  ///
-  /// @param seat where the failure is reported
-  /// @param observe read before and after the body
-  /// @param body the call that must change nothing observed
-  /// @param msg the contract under test
-  /// @param options relaxations for this call alone
-  public static void isPure(Seat seat, Callable<@Nullable Object> observe, Raises.Body body, String msg, Option... options) {
-    seat.helper();
-    Behaviour.isPure(seat, MODE, observe, body, msg, options);
-  }
-
   /// Fail when a body of assertions never passes in time.
   ///
   /// The body is handed a seat of its own, so assertions inside it record an attempt
@@ -402,7 +472,8 @@ public final class Check {
   /// @param interval how long to wait between attempts
   /// @param body states the condition as assertions, against the seat it is handed
   /// @param msg the contract under test
-  public static void eventually(Seat seat, Duration timeout, Duration interval, Consumer<Seat> body, String msg) {
+  public static void eventually(
+      Seat seat, Duration timeout, Duration interval, Consumer<Seat> body, String msg) {
     seat.helper();
     Waiting.eventually(seat, MODE, timeout, interval, body, msg);
   }
@@ -416,54 +487,10 @@ public final class Check {
   /// @param timeout how long to keep retrying
   /// @param predicate must eventually answer true
   /// @param msg the contract under test
-  public static void eventuallyTrue(Seat seat, Duration timeout, BooleanSupplier predicate, String msg) {
+  public static void eventuallyTrue(
+      Seat seat, Duration timeout, BooleanSupplier predicate, String msg) {
     seat.helper();
     Waiting.eventuallyTrue(seat, MODE, timeout, predicate, msg);
-  }
-
-  /// Fail when an adjacent pair does not satisfy the predicate.
-  ///
-  /// Nought or one item passes, since neither has a pair. One assertion rather than
-  /// sorted, unique and strictly increasing, because each of those is a relation between
-  /// neighbours.
-  ///
-  /// @param <T> what the sequence holds
-  /// @param seat where the failure is reported
-  /// @param items the sequence to walk
-  /// @param predicate called with the earlier item and the later one
-  /// @param msg the contract under test
-  public static <T> void pairwise(Seat seat, List<T> items, BiPredicate<T, T> predicate, String msg) {
-    seat.helper();
-    Order.pairwise(seat, MODE, items, predicate, msg);
-  }
-
-  /// Fail when no error of the given class is in the chain.
-  ///
-  /// Use it to read fields off a specific type rather than parsing its message.
-  ///
-  /// @param <E> the class of error looked for
-  /// @param seat where the failure is reported
-  /// @param error the error to inspect
-  /// @param want the class to look for
-  /// @param msg the contract under test
-  /// @return the matching error, so its fields can be read, or null when nothing matched
-  public static <E extends Throwable> @Nullable E errorAs(Seat seat, @Nullable Throwable error, Class<E> want, String msg) {
-    seat.helper();
-    return Errors.errorAs(seat, MODE, error, want, msg);
-  }
-
-  /// Fail when the body does not throw.
-  ///
-  /// throws is a Java keyword, which is why this is not called that. Any Throwable
-  /// counts, including an Error; where the type matters, assert on what is returned.
-  ///
-  /// @param seat where the failure is reported
-  /// @param body the work under test
-  /// @param msg the contract under test
-  /// @return what the body threw, or null when it returned
-  public static @Nullable Throwable throwsException(Seat seat, Raises.Body body, String msg) {
-    seat.helper();
-    return Raises.throwsException(seat, MODE, body, msg);
   }
 
   /// Answer a callable that fails when work started in the scope outlives it.
@@ -503,5 +530,4 @@ public final class Check {
     }
     return recorder.message();
   }
-
 }
