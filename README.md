@@ -33,8 +33,8 @@ class StoreTest {
   void get() {
     var item = store.get("widget");
 
-    Check.isNotNull(seat.get(), item, "get answers the stored item");
-    Check.equal(seat.get(), item.name(), "widget", "and the item is the one stored");
+    Check.isNotNull(seat, item, "get answers the stored item");
+    Check.equal(seat, item.name(), "widget", "and the item is the one stored");
   }
 }
 ```
@@ -59,10 +59,11 @@ benchmark, and a test that checks the assertion itself.
 | `Standard` | throws | throws |
 | `Recorder` | collects | collects |
 
-`SeatExtension` is a field rather than a parameter, because a parameter
-resolver hands out a value JUnit then forgets: nothing would be left
-holding the collector when the body ends. It is the only class here
-that mentions JUnit, and it is optional.
+`SeatExtension` is a `Seat` itself, so it goes straight into a call.
+It is a field rather than a parameter, because a parameter resolver
+hands out a value JUnit then forgets: nothing would be left holding the
+collector when the body ends. It is the only class here that mentions
+JUnit, and it is optional.
 
 ## Two surfaces
 
@@ -70,10 +71,10 @@ that mentions JUnit, and it is optional.
 one run shows every property that failed.
 
 ```java
-Check.equal(seat.get(), reply.status(), 200, "the request succeeds");
+Check.equal(seat, reply.status(), 200, "the request succeeds");
 
-Soft.hasPrefix(seat.get(), reply.body(), "{", "the body is JSON");
-Soft.length(seat.get(), reply.items(), 3, "every item comes back");
+Soft.hasPrefix(seat, reply.body(), "{", "the body is JSON");
+Soft.length(seat, reply.items(), 3, "every item comes back");
 ```
 
 If both `Soft` calls fail, both are reported together:

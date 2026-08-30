@@ -19,10 +19,20 @@ class SeatExtensionTest {
   @RegisterExtension final SeatExtension seat = new SeatExtension();
 
   @Test
+  @DisplayName("the extension goes straight into a call, with no accessor")
+  void theExtensionIsASeat() {
+    Check.equal(seat, 1, 1, "it holds");
+    Soft.equal(seat, 2, 3, "it records through the extension");
+
+    assertEquals(1, seat.get().collected().size());
+    assertThrows(AssertionFailed.class, () -> seat.get().flush());
+  }
+
+  @Test
   @DisplayName("a passing test leaves the seat empty")
   void aPassingTestLeavesTheSeatEmpty() {
-    Check.equal(seat.get(), 1, 1, "it holds");
-    Soft.contains(seat.get(), List.of(1, 2), 1, "it is there");
+    Check.equal(seat, 1, 1, "it holds");
+    Soft.contains(seat, List.of(1, 2), 1, "it is there");
 
     assertTrue(seat.get().collected().isEmpty());
   }
@@ -30,7 +40,7 @@ class SeatExtensionTest {
   @Test
   @DisplayName("check throws on the extension's seat")
   void checkThrows() {
-    assertThrows(AssertionFailed.class, () -> Check.equal(seat.get(), 1, 2, "it holds"));
+    assertThrows(AssertionFailed.class, () -> Check.equal(seat, 1, 2, "it holds"));
   }
 
   @Test

@@ -1,6 +1,7 @@
 package dev.dokimi.assertion.junit;
 
 import dev.dokimi.assertion.Collector;
+import dev.dokimi.assertion.Seat;
 import org.jspecify.annotations.NullMarked;
 
 /// A seat that flushes itself when the test body ends.
@@ -15,11 +16,14 @@ import org.jspecify.annotations.NullMarked;
 ///
 ///   @Test
 ///   void get() {
-///     Check.isNotNull(seat.get(), store.get(id), "get answers the stored item");
-///     Soft.equal(seat.get(), store.size(), 1, "and nothing else was added");
+///     Check.isNotNull(seat, store.get(id), "get answers the stored item");
+///     Soft.equal(seat, store.size(), 1, "and nothing else was added");
 ///   }
 /// }
 /// ```
+///
+/// It is a [Seat] itself, so it goes straight into a call. Reaching through an accessor
+/// at every call site would put six of them in an eight-assertion test.
 ///
 /// A field rather than a parameter, because a parameter resolver hands out a value JUnit
 /// then forgets: nothing would be left holding the collector when the body ends.
@@ -29,18 +33,36 @@ import org.jspecify.annotations.NullMarked;
 /// framework ends a test.
 @NullMarked
 public final class SeatExtension
-    implements org.junit.jupiter.api.extension.AfterTestExecutionCallback {
+    implements Seat, org.junit.jupiter.api.extension.AfterTestExecutionCallback {
 
   private Collector collector = new Collector();
 
   /// Return an extension holding a fresh seat.
   public SeatExtension() {}
 
-  /// The seat to pass to an assertion.
+  /// The collector this extension currently holds.
+  ///
+  /// Only needed to read what the recording surface has gathered so far, or to flush it
+  /// early. Passing the extension itself to an assertion is the usual way.
   ///
   /// @return the collector this extension flushes
   public Collector get() {
     return collector;
+  }
+
+  @Override
+  public void helper() {
+    collector.helper();
+  }
+
+  @Override
+  public void fail(String message) {
+    collector.fail(message);
+  }
+
+  @Override
+  public void record(String message) {
+    collector.record(message);
   }
 
   /// Flush what the test recorded, then start a fresh seat.
