@@ -366,9 +366,9 @@ public final class Soft {
   /// dereferencing the missing handle.
   ///
   /// @param seat where the failure is reported
-  /// @param body called with a null handle
+  /// @param body called with a null handle, which it must not dereference
   /// @param msg the contract under test
-  public static void nullHandleSafe(Seat seat, Consumer<@Nullable Object> body, String msg) {
+  public static void nullHandleSafe(Seat seat, Behaviour.Handled body, String msg) {
     seat.helper();
     Behaviour.nullHandleSafe(seat, MODE, body, msg);
   }

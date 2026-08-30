@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 /// Comparison against a recorded file.
 ///
@@ -170,11 +171,8 @@ public final class Golden {
       return;
     }
 
-    Pattern holder =
-        Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*(.+?)(?=,\\n|\\n?\\})",
-            Pattern.DOTALL);
-    var found = holder.matcher(recorded);
-    if (!found.find()) {
+    String theirRaw = rawValueOf(recorded, field);
+    if (theirRaw == null) {
       if (!update) {
         seat.fail(
             path + ": the golden file has no field \"" + field + "\"; set " + UPDATE_ENV
@@ -186,12 +184,12 @@ public final class Golden {
     }
 
     String mine = scrub(got.trim(), scrubbers);
-    String theirs = scrub(found.group(1).trim(), scrubbers);
+    String theirs = scrub(theirRaw.trim(), scrubbers);
     if (mine.equals(theirs)) {
       return;
     }
     if (update) {
-      write(seat, path, recorded.replace(found.group(1).trim(), got.trim()));
+      write(seat, path, recorded.replace(theirRaw, got.trim()));
       return;
     }
     Report.to(
@@ -199,6 +197,68 @@ public final class Golden {
         Mode.FATAL,
         path + ": field \"" + field + "\" does not match the golden file; read the diff "
             + "before setting " + UPDATE_ENV + "=1\n--- want\n" + theirs + "\n+++ got\n" + mine);
+  }
+
+  /// Answer a field's raw JSON value, or null when the field is absent.
+  ///
+  /// Scans rather than matching a pattern. A regular expression cannot find where a
+  /// value ends: it has to stop at a brace, and a nested object or an array of objects
+  /// carries braces of its own. The earlier pattern captured `{"a": 1` from
+  /// `{"items": {"a": 1}}`, then compared that fragment and reported whatever it liked.
+  ///
+  /// This tracks nesting depth and ignores anything inside a string, which is what
+  /// separates a structural brace from one in the text.
+  private static @Nullable String rawValueOf(String document, String field) {
+    String key = "\"" + field + "\"";
+    int at = document.indexOf(key);
+    if (at < 0) {
+      return null;
+    }
+
+    int colon = document.indexOf(':', at + key.length());
+    if (colon < 0) {
+      return null;
+    }
+
+    int start = colon + 1;
+    while (start < document.length() && Character.isWhitespace(document.charAt(start))) {
+      start++;
+    }
+
+    int depth = 0;
+    boolean inString = false;
+    boolean escaped = false;
+    for (int i = start; i < document.length(); i++) {
+      char c = document.charAt(i);
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (c == '\\' && inString) {
+        escaped = true;
+        continue;
+      }
+      if (c == '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) {
+        continue;
+      }
+
+      if (c == '{' || c == '[') {
+        depth++;
+      } else if (c == '}' || c == ']') {
+        if (depth == 0) {
+          return document.substring(start, i).trim();
+        }
+        depth--;
+      } else if (c == ',' && depth == 0) {
+        return document.substring(start, i).trim();
+      }
+    }
+    return document.substring(start).trim();
   }
 
   private static String scrub(String text, Scrubber[] scrubbers) {

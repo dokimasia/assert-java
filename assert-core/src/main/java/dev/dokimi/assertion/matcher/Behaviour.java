@@ -22,6 +22,19 @@ public final class Behaviour {
 
   private Behaviour() {}
 
+  /// Work that takes a cancellation handle, which may be absent.
+  ///
+  /// Named rather than a `Consumer<Object>`, so a caller can see from the signature
+  /// what they are handed and that it may be null.
+  @FunctionalInterface
+  public interface Handled {
+    /// Run the work.
+    ///
+    /// @param handle the cancellation handle, or null
+    /// @throws Throwable whatever the work throws
+    void run(@Nullable Supplier<Boolean> handle) throws Throwable;
+  }
+
   /// Work that takes a cancellation handle and may throw.
   @FunctionalInterface
   public interface Cancellable {
@@ -132,14 +145,13 @@ public final class Behaviour {
   /// @param mode whether the failure stops the test or is recorded
   /// @param body called with a null handle
   /// @param msg the contract under test
-  public static void nullHandleSafe(
-      Seat seat, Mode mode, java.util.function.Consumer<@Nullable Object> body, String msg) {
+  public static void nullHandleSafe(Seat seat, Mode mode, Handled body, String msg) {
     seat.helper();
     try {
-      body.accept(null);
+      body.run(null);
     } catch (NullPointerException crashed) {
       Report.to(seat, mode, msg + ": a missing handle caused " + Show.value(crashed));
-    } catch (RuntimeException ignored) {
+    } catch (Throwable ignored) {
       // An exception of its own is the subject declining, not crashing.
     }
   }
