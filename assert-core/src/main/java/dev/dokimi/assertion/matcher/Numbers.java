@@ -1,6 +1,7 @@
 package dev.dokimi.assertion.matcher;
 
 import dev.dokimi.assertion.Seat;
+import java.util.Map;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
@@ -14,9 +15,10 @@ public final class Numbers {
     return value instanceof Number number ? number.doubleValue() : null;
   }
 
-  private static void requiresNumber(Seat seat, Mode mode, String msg, @Nullable Object got) {
-    String type = got == null ? "null" : got.getClass().getSimpleName();
-    Report.to(seat, mode, msg + ": requires a number, got " + type);
+  private static void requiresNumber(
+      Seat seat, Mode mode, String msg, String assertion,
+      Map<String, @Nullable Object> detail) {
+    Report.failure(seat, mode, assertion, msg, detail);
   }
 
   /// Fail when got is further than tolerance from want.
@@ -36,7 +38,8 @@ public final class Numbers {
     seat.helper();
     Double value = asNumber(got);
     if (value == null) {
-      requiresNumber(seat, mode, msg, got);
+      requiresNumber(seat, mode, msg, "close-to",
+          Report.detail("got", got, "want", want, "tolerance", tolerance));
       return;
     }
 
@@ -44,18 +47,13 @@ public final class Numbers {
     // would pass a NaN rather than reject it. Name the case instead.
     double diff = Math.abs(value - want);
     if (Double.isNaN(diff) || Double.isNaN(tolerance)) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(got) + " is not within " + tolerance + " of " + want
-              + ": NaN is outside every tolerance");
+      Report.failure(seat, mode, "close-to", msg,
+          Report.detail("got", got, "want", want, "tolerance", tolerance));
       return;
     }
     if (diff > tolerance) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(got) + " is not within " + tolerance + " of " + want);
+      Report.failure(seat, mode, "close-to", msg,
+          Report.detail("got", got, "want", want, "tolerance", tolerance));
     }
   }
 
@@ -75,16 +73,18 @@ public final class Numbers {
     seat.helper();
     Double value = asNumber(got);
     if (value == null) {
-      requiresNumber(seat, mode, msg, got);
+      requiresNumber(seat, mode, msg, "in-range",
+          Report.detail("got", got, "low", low, "high", high));
       return;
     }
     if (low > high) {
-      Report.to(seat, mode, msg + ": [" + low + ", " + high + "] is an empty range");
+      Report.failure(seat, mode, "in-range", msg,
+          Report.detail("got", got, "low", low, "high", high));
       return;
     }
     if (Double.isNaN(value) || value < low || value > high) {
-      Report.to(
-          seat, mode, msg + ": " + Show.value(got) + " is not in [" + low + ", " + high + "]");
+      Report.failure(seat, mode, "in-range", msg,
+          Report.detail("got", got, "low", low, "high", high));
     }
   }
 }

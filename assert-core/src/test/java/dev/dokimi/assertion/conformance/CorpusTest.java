@@ -1,11 +1,17 @@
 package dev.dokimi.assertion.conformance;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.dokimi.assertion.Check;
+import dev.dokimi.assertion.Where;
+import dev.dokimi.assertion.Controlled;
+import java.time.Instant;
+import dev.dokimi.assertion.Failure;
+import java.util.Objects;
 import dev.dokimi.assertion.Recorder;
 import dev.dokimi.assertion.Seat;
 import dev.dokimi.assertion.Soft;
@@ -70,12 +76,61 @@ class CorpusTest {
     String member = names().get(one.assertion());
     assertNotNull(member, "no " + Definition.LANGUAGE + " name for " + one.assertion());
 
+    if (one.subject() != null) {
+      runSubjectCase(one, surface);
+      return;
+    }
+
     Recorder recorder = new Recorder();
     invoke(SURFACES.get(surface), member, recorder, one);
 
     String mismatch = mismatch(one, recorder);
     assertNotNull(one.id());
     assertTrue(mismatch == null, () -> one.id() + " on " + surface + ": " + mismatch);
+    checkWhere(one, recorder);
+  }
+
+  /**
+   * Drive a case that names a behaviour, and hold the outcome to what it states.
+   *
+   * <p>A kind this language cannot build is a skip, which is what the standard
+   * states for one an implementation cannot make.
+   */
+  private static void runSubjectCase(Corpus.Case one, String surface) {
+    SubjectRegistry.Subject held = SubjectRegistry.build(one.subject());
+    assumeTrue(held != null, "no subject named " + one.subject());
+
+    Recorder recorder = new Recorder().withClock(new Controlled(Instant.EPOCH));
+    boolean ran =
+        surface.equals("check")
+            ? SubjectRegistry.runCheck(one.assertion(), held, recorder, one.id())
+            : SubjectRegistry.runSoft(one.assertion(), held, recorder, one.id());
+    assumeTrue(ran, "no driver for " + one.assertion());
+
+    String mismatch = mismatch(one, recorder);
+    assertTrue(mismatch == null, () -> one.id() + " on " + surface + ": " + mismatch);
+    checkWhere(one, recorder);
+  }
+
+  /**
+   * Hold every record to naming a real call site outside the library.
+   *
+   * <p>A case cannot state a line: the line is wherever the caller put the call.
+   * What every case can state is that the record points somewhere a reader can
+   * open, and never at the machinery that built it. Both call-site bugs this
+   * standard has found were of that shape.
+   */
+  private static void checkWhere(Corpus.Case one, Recorder recorder) {
+    for (Failure held : recorder.failures()) {
+      Where where = held.where();
+      assertNotNull(where, () -> one.id() + ": " + held.assertion() + " reported no call site");
+      assertTrue(
+          where.line() > 0,
+          () -> one.id() + ": " + held.assertion() + " reported line zero");
+      assertFalse(
+          where.file().equals("Report.java"),
+          () -> one.id() + ": " + held.assertion() + " reports the library's own frame");
+    }
   }
 
   /**
@@ -143,11 +198,48 @@ class CorpusTest {
     if (!recorder.failed()) {
       return "expected a failure, got a pass";
     }
-    for (String wanted : one.messageContains()) {
-      if (!recorder.message().contains(wanted)) {
-        return "the failure does not mention \"" + wanted + "\": " + recorder.message();
+
+    List<Failure> records = recorder.failures();
+    if (records.isEmpty()) {
+      return "reported no record; the assertion did not report one";
+    }
+    return detailMismatch(one, records.get(0));
+  }
+
+  /**
+   * Say how a record's detail differs from what the case states, and null when
+   * every stated field matches.
+   */
+  private static String detailMismatch(Corpus.Case one, Failure held) {
+    for (Map.Entry<String, Object> stated : one.detail().entrySet()) {
+      String name = stated.getKey();
+      if (!held.detail().containsKey(name)) {
+        return "the record holds no detail \"" + name + "\", want " + stated.getValue();
+      }
+      Object found = held.detail().get(name);
+      if (!same(found, stated.getValue())) {
+        return "detail \"" + name + "\" is " + found + ", want " + stated.getValue();
       }
     }
     return null;
+  }
+
+  /**
+   * Whether a reported value matches what a case states.
+   *
+   * A NaN is unequal to itself under the standard's own rules, which would make
+   * a case stating one impossible to satisfy. Here the question is whether the
+   * assertion reported the value the case named, so two NaNs count as the same.
+   */
+  private static boolean same(Object held, Object want) {
+    if (held instanceof Double first && want instanceof Double second
+        && first.isNaN() && second.isNaN()) {
+      return true;
+    }
+    if (held instanceof Number first && want instanceof Number second
+        && !(held instanceof Double) && !(want instanceof Double)) {
+      return first.longValue() == second.longValue();
+    }
+    return Objects.equals(held, want);
   }
 }

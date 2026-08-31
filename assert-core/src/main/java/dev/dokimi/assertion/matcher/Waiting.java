@@ -1,7 +1,10 @@
 package dev.dokimi.assertion.matcher;
 
+import dev.dokimi.assertion.Clock;
+import dev.dokimi.assertion.Controlled;
 import dev.dokimi.assertion.Seat;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,9 +16,10 @@ import org.jspecify.annotations.Nullable;
 
 /// Assertions that retry, and the one that checks nothing was left running.
 ///
-/// These spend real time, deliberately. They are for a condition something outside the
-/// test makes true, which is what a controlled clock cannot reach: a fake clock only
-/// moves when someone advances it, and nobody will while this is waiting.
+/// These read time from the seat's clock. Against the platform clock they spend real
+/// time, which is what a condition something outside the test makes true requires.
+/// Against a clock a test controls they advance it between attempts instead, so the
+/// retrying costs nothing; that only helps where the subject reads the same clock.
 @NullMarked
 public final class Waiting {
 
@@ -61,7 +65,8 @@ public final class Waiting {
       Consumer<Seat> body,
       String msg) {
     seat.helper();
-    long deadline = System.nanoTime() + timeout.toNanos();
+    Clock clock = Report.clockOf(seat);
+    Instant deadline = clock.now().plus(timeout);
 
     for (int attempt = 1; ; attempt++) {
       Trial trial = new Trial();
@@ -71,15 +76,12 @@ public final class Waiting {
       if (failure == null) {
         return;
       }
-      if (System.nanoTime() > deadline) {
-        Report.to(
-            seat,
-            mode,
-            msg + ": still failing after " + timeout.toMillis() + "ms and " + attempt
-                + " attempts: " + failure);
+      if (clock.now().isAfter(deadline)) {
+        Report.failure(seat, mode, "eventually", msg,
+            Report.detail("attempts", attempt, "last", failure));
         return;
       }
-      if (!sleep(interval)) {
+      if (!wait(clock, interval)) {
         return;
       }
     }
@@ -99,7 +101,8 @@ public final class Waiting {
   public static void eventuallyTrue(
       Seat seat, Mode mode, Duration timeout, BooleanSupplier predicate, String msg) {
     seat.helper();
-    long deadline = System.nanoTime() + timeout.toNanos();
+    Clock clock = Report.clockOf(seat);
+    Instant deadline = clock.now().plus(timeout);
     Duration backoff = Duration.ofMillis(1);
     Duration cap = timeout.dividedBy(4);
 
@@ -107,15 +110,12 @@ public final class Waiting {
       if (predicate.getAsBoolean()) {
         return;
       }
-      if (System.nanoTime() > deadline) {
-        Report.to(
-            seat,
-            mode,
-            msg + ": still false after " + timeout.toMillis() + "ms and " + attempt
-                + " attempts");
+      if (clock.now().isAfter(deadline)) {
+        Report.failure(seat, mode, "eventually-true", msg,
+            Report.detail("attempts", attempt));
         return;
       }
-      if (!sleep(backoff)) {
+      if (!wait(clock, backoff)) {
         return;
       }
       backoff = backoff.multipliedBy(2);
@@ -125,10 +125,21 @@ public final class Waiting {
     }
   }
 
-  /// Wait, answering false when the test's own thread was interrupted.
-  private static boolean sleep(Duration duration) {
+  /// Move time forward by the duration.
+  ///
+  /// A clock a test controls is advanced, because nothing else will move it
+  /// while this call is running. Any other clock is slept against.
+  ///
+  /// @param clock where time is read
+  /// @param duration how far to move forward
+  /// @return false when the thread was interrupted while waiting
+  private static boolean wait(Clock clock, Duration duration) {
+    if (clock instanceof Controlled moving) {
+      moving.advance(duration);
+      return true;
+    }
     try {
-      Thread.sleep(Math.max(1, duration.toMillis()));
+      clock.sleep(Duration.ofMillis(Math.max(1, duration.toMillis())));
       return true;
     } catch (InterruptedException interrupted) {
       Thread.currentThread().interrupt();
@@ -162,7 +173,7 @@ public final class Waiting {
       if (!leaked.isEmpty()) {
         List<String> names =
             leaked.stream().map(Thread::getName).sorted().collect(Collectors.toList());
-        Report.to(seat, mode, msg + ": still running: " + String.join(", ", names));
+        Report.failure(seat, mode, "no-task-leaks", msg, Report.detail("leaked", names));
       }
     };
   }

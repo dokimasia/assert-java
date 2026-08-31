@@ -69,7 +69,7 @@ public final class Errors {
   public static void noError(Seat seat, Mode mode, @Nullable Throwable error, String msg) {
     seat.helper();
     if (error != null) {
-      Report.to(seat, mode, msg + ": unexpected error " + Show.value(error));
+      Report.failure(seat, mode, "err-absent", msg, Report.detail("got", error));
     }
   }
 
@@ -82,7 +82,7 @@ public final class Errors {
   public static void hasError(Seat seat, Mode mode, @Nullable Throwable error, String msg) {
     seat.helper();
     if (error == null) {
-      Report.to(seat, mode, msg + ": expected an error, got none");
+      Report.failure(seat, mode, "err-present", msg);
     }
   }
 
@@ -97,10 +97,8 @@ public final class Errors {
       Seat seat, Mode mode, @Nullable Throwable error, Object target, String msg) {
     seat.helper();
     if (!matches(error, target)) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(error) + " does not match " + Show.value(target));
+      Report.failure(seat, mode, "err-is", msg,
+          Report.detail("want", target, "got", error));
     }
   }
 
@@ -115,7 +113,7 @@ public final class Errors {
       Seat seat, Mode mode, @Nullable Throwable error, Object target, String msg) {
     seat.helper();
     if (matches(error, target)) {
-      Report.to(seat, mode, msg + ": " + Show.value(error) + " matches " + Show.value(target));
+      Report.failure(seat, mode, "err-is-not", msg, Report.detail("got", error));
     }
   }
 
@@ -136,8 +134,8 @@ public final class Errors {
         return want.cast(link);
       }
     }
-    Report.to(
-        seat, mode, msg + ": no " + want.getSimpleName() + " in " + Show.value(error));
+    Report.failure(seat, mode, "err-as", msg,
+        Report.detail("want", want, "got", error));
     return null;
   }
 }

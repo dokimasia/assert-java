@@ -56,9 +56,10 @@ public final class Containment {
     return Outcome.NO_ANSWER;
   }
 
-  private static void unsupported(Seat seat, Mode mode, String msg, @Nullable Object got) {
-    String type = got == null ? "null" : got.getClass().getSimpleName();
-    Report.to(seat, mode, msg + ": containment is not supported for " + type);
+  private static void unsupported(
+      Seat seat, Mode mode, String msg, String assertion,
+      Map<String, @Nullable Object> detail) {
+    Report.failure(seat, mode, assertion, msg, detail);
   }
 
   /// Fail when haystack does not hold needle.
@@ -79,14 +80,13 @@ public final class Containment {
     seat.helper();
     Outcome outcome = holds(haystack, needle, Relaxations.of(options));
     if (!outcome.answered()) {
-      unsupported(seat, mode, msg, haystack);
+      unsupported(seat, mode, msg, "contains",
+          Report.detail("haystack", haystack, "needle", needle));
       return;
     }
     if (!outcome.held()) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(haystack) + " does not contain " + Show.value(needle));
+      Report.failure(seat, mode, "contains", msg,
+          Report.detail("haystack", haystack, "needle", needle));
     }
   }
 
@@ -108,12 +108,13 @@ public final class Containment {
     seat.helper();
     Outcome outcome = holds(haystack, needle, Relaxations.of(options));
     if (!outcome.answered()) {
-      unsupported(seat, mode, msg, haystack);
+      unsupported(seat, mode, msg, "not-contains",
+          Report.detail("haystack", haystack, "needle", needle));
       return;
     }
     if (outcome.held()) {
-      Report.to(
-          seat, mode, msg + ": " + Show.value(haystack) + " contains " + Show.value(needle));
+      Report.failure(seat, mode, "not-contains", msg,
+          Report.detail("haystack", haystack, "needle", needle));
     }
   }
 
@@ -131,20 +132,19 @@ public final class Containment {
       Seat seat, Mode mode, @Nullable Object got, String[] needles, String msg) {
     seat.helper();
     if (!(got instanceof CharSequence sequence)) {
-      String type = got == null ? "null" : got.getClass().getSimpleName();
-      Report.to(seat, mode, msg + ": requires text, got " + type);
+      Report.failure(seat, mode, "contains-in-order", msg,
+          Report.detail("haystack", got, "needle", "", "index", 0));
       return;
     }
 
     String text = sequence.toString();
     int from = 0;
-    for (String needle : needles) {
+    for (int i = 0; i < needles.length; i++) {
+      String needle = needles[i];
       int at = text.indexOf(needle, from);
       if (at < 0) {
-        Report.to(
-            seat,
-            mode,
-            msg + ": " + Show.value(needle) + " does not follow what came before");
+        Report.failure(seat, mode, "contains-in-order", msg,
+            Report.detail("haystack", text, "needle", needle, "index", i));
         return;
       }
       from = at + needle.length();

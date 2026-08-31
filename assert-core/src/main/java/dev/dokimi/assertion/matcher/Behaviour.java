@@ -2,7 +2,11 @@ package dev.dokimi.assertion.matcher;
 
 import dev.dokimi.assertion.Option;
 import dev.dokimi.assertion.Seat;
+import java.time.Instant;
+import dev.dokimi.assertion.Clock;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import org.jspecify.annotations.NullMarked;
@@ -57,7 +61,7 @@ public final class Behaviour {
   /// @param msg the contract under test
   public static void honoursCancellation(Seat seat, Mode mode, Cancellable body, String msg) {
     seat.helper();
-    drive(seat, mode, body, msg, "an interrupted subject");
+    drive(seat, mode, body, msg, "honours-cancellation");
   }
 
   /// Fail when a subject given no time does not stop.
@@ -72,23 +76,37 @@ public final class Behaviour {
   /// @param msg the contract under test
   public static void honoursDeadline(Seat seat, Mode mode, Cancellable body, String msg) {
     seat.helper();
-    drive(seat, mode, body, msg, "a subject given no time");
+    drive(seat, mode, body, msg, "honours-deadline");
   }
 
+  /// Run the body against a handle that says to stop, and report when it does
+  /// not say it stopped for that reason.
+  ///
+  /// The subject is asked whether it reports a cancellation, not merely whether
+  /// it returns: one that never reads the handle and answers success has done
+  /// the work it was told to abandon. It runs on a thread of its own so a
+  /// subject that blocks forever is reported rather than hanging the test,
+  /// which a direct call cannot do.
+  ///
+  /// @param seat where the failure is reported
+  /// @param mode whether the failure stops the test or is recorded
+  /// @param body the subject under test
+  /// @param msg the contract under test
+  /// @param assertion the canonical id being driven
   private static void drive(
-      Seat seat, Mode mode, Cancellable body, String msg, String subject) {
+      Seat seat, Mode mode, Cancellable body, String msg, String assertion) {
+
+    AtomicReference<@Nullable Throwable> raised = new AtomicReference<>();
+    AtomicBoolean returned = new AtomicBoolean();
 
     Thread worker =
         new Thread(
             () -> {
               try {
-                body.run(() -> Thread.currentThread().isInterrupted());
-              } catch (InterruptedException stopped) {
-                Thread.currentThread().interrupt();
-              } catch (Throwable ignored) {
-                // Any other throwable still means the subject stopped,
-                // which is what is being asked. Which throwable it was
-                // is a question for another assertion.
+                body.run(() -> true);
+                returned.set(true);
+              } catch (Throwable thrown) {
+                raised.set(thrown);
               }
             });
     worker.setDaemon(true);
@@ -101,9 +119,46 @@ public final class Behaviour {
       Thread.currentThread().interrupt();
       return;
     }
+
     if (worker.isAlive()) {
-      Report.to(seat, mode, msg + ": " + subject + " did not stop within " + NOTICE);
+      Report.failure(
+          seat, mode, assertion, msg, Report.detail("got", "did not stop within " + NOTICE));
+      return;
     }
+    Throwable thrown = raised.get();
+    if (thrown != null) {
+      if (!stopped(thrown)) {
+        Report.failure(seat, mode, assertion, msg, Report.detail("got", thrown));
+      }
+      return;
+    }
+    if (returned.get()) {
+      Report.failure(
+          seat,
+          mode,
+          assertion,
+          msg,
+          Report.detail("got", "returned as if it had done the work"));
+    }
+  }
+
+  /// Whether a throwable is how this platform says a caller gave up or ran out
+  /// of time.
+  ///
+  /// @param raised what the subject threw
+  /// @return whether it names a stop
+  private static boolean stopped(Throwable raised) {
+    for (Throwable at = raised; at != null; at = at.getCause()) {
+      if (at instanceof InterruptedException
+          || at instanceof java.util.concurrent.CancellationException
+          || at instanceof java.util.concurrent.TimeoutException) {
+        return true;
+      }
+      if (at == at.getCause()) {
+        break;
+      }
+    }
+    return false;
   }
 
   /// Fail when the body takes longer than the given duration.
@@ -119,20 +174,20 @@ public final class Behaviour {
   public static void completesWithin(
       Seat seat, Mode mode, Duration within, Raises.Body body, String msg) {
     seat.helper();
-    long started = System.nanoTime();
+    Clock clock = Report.clockOf(seat);
+    Instant started = clock.now();
     try {
       body.run();
     } catch (Throwable ignored) {
       // Failing quickly is still finishing, so the measurement stands.
       // Which failure is acceptable is another assertion's question.
     }
-    Duration elapsed = Duration.ofNanos(System.nanoTime() - started);
+    Duration elapsed = Duration.between(started, clock.now());
 
     if (elapsed.compareTo(within) > 0) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": took " + elapsed.toMillis() + "ms, want at most " + within.toMillis() + "ms");
+      // Milliseconds is the granularity this assertion is about.
+      Report.failure(seat, mode, "completes-within", msg,
+          Report.detail("want", within.toMillis(), "got", elapsed.toMillis()));
     }
   }
 
@@ -150,7 +205,7 @@ public final class Behaviour {
     try {
       body.run(null);
     } catch (NullPointerException crashed) {
-      Report.to(seat, mode, msg + ": a missing handle caused " + Show.value(crashed));
+      Report.failure(seat, mode, "nil-context-safe", msg, Report.detail("got", crashed));
     } catch (Throwable ignored) {
       // An exception of its own is the subject declining, not crashing.
     }
@@ -182,14 +237,10 @@ public final class Behaviour {
       Object after = observe.call();
 
       if (!Compare.equal(after, before, Relaxations.of(options))) {
-        Report.to(
-            seat,
-            mode,
-            msg + ": observable state changed: was " + Show.value(before)
-                + ", now " + Show.value(after));
+        Report.failure(seat, mode, "pure", msg, Report.detail("want", before, "got", after));
       }
     } catch (Throwable thrown) {
-      Report.to(seat, mode, msg + ": observing threw " + Show.value(thrown));
+      Report.failure(seat, mode, "pure", msg, Report.detail("want", null, "got", thrown));
     }
   }
 }

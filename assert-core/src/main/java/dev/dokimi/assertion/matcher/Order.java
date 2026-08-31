@@ -32,11 +32,8 @@ public final class Order {
       T earlier = items.get(i - 1);
       T later = items.get(i);
       if (!predicate.test(earlier, later)) {
-        Report.to(
-            seat,
-            mode,
-            msg + ": the pair at index " + (i - 1) + " fails: "
-                + Show.value(earlier) + " then " + Show.value(later));
+        Report.failure(seat, mode, "pairwise", msg,
+            Report.detail("index", i - 1, "first", earlier, "second", later));
         return;
       }
     }

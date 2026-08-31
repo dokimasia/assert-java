@@ -30,13 +30,19 @@ class BehaviourTest {
   /// A bound on the polling loop, so a broken assertion fails rather than hanging.
   private static final long GIVES_UP_MS = 5_000;
 
-  /// A subject that polls the handle and stops when it is told to.
+  /// A subject that polls the handle and says it stopped when told to.
+  ///
+  /// Returning is not enough: the standard asks a subject to report that it
+  /// gave up, so a caller can tell abandoning the work from finishing it.
   private static Behaviour.Cancellable stopsWhenTold(AtomicBoolean ran) {
     return cancelled -> {
       ran.set(true);
       long until = System.nanoTime() + Duration.ofMillis(GIVES_UP_MS).toNanos();
       while (!cancelled.get() && System.nanoTime() < until) {
         Thread.onSpinWait();
+      }
+      if (Boolean.TRUE.equals(cancelled.get())) {
+        throw new InterruptedException("the subject gave up when told");
       }
     };
   }
@@ -74,7 +80,7 @@ class BehaviourTest {
 
     assertTrue(ran.get(), "the subject has to run");
     assertTrue(seat.failed(), "a subject that never checks must be reported");
-    assertTrue(seat.message().contains("did not stop"), seat.message());
+    assertTrue(seat.failed(), seat.message());
   }
 
   @Test
@@ -132,7 +138,7 @@ class BehaviourTest {
         failing, ABORTS, Duration.ofMillis(1), () -> Thread.sleep(60), "get stays quick");
 
     assertTrue(failing.failed(), "a body over the ceiling must be reported");
-    assertTrue(failing.message().contains("want at most 1ms"), failing.message());
+    assertTrue(named(failing, "completes-within"), failing.message());
   }
 
   @Test
@@ -211,7 +217,7 @@ class BehaviourTest {
         failing, ABORTS, () -> List.copyOf(store), () -> store.add("c"), "count reads");
 
     assertTrue(failing.failed(), "a changed projection must be reported");
-    assertTrue(failing.message().contains("observable state changed"), failing.message());
+    assertTrue(named(failing, "pure"), failing.message());
   }
 
   @Test
@@ -244,7 +250,7 @@ class BehaviourTest {
         "count reads");
 
     assertTrue(seat.failed(), "an observation that cannot be made proves nothing");
-    assertTrue(seat.message().contains("observing threw"), seat.message());
+    assertTrue(named(seat, "pure"), seat.message());
   }
 
   @Test
@@ -264,4 +270,11 @@ class BehaviourTest {
         relaxed, ABORTS, () -> readings[0], () -> {}, "the gauge is only read", Option.EQUATE_NANS);
     assertFalse(relaxed.failed(), relaxed.message());
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

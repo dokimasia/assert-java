@@ -93,7 +93,7 @@ class ErrorsTest {
     Errors.errorIs(
         failing, ABORTS, new IOException("disk gone"), Refused.class, "the call refuses");
     assertTrue(failing.failed(), "a different class must be reported");
-    assertTrue(failing.message().contains("does not match"), failing.message());
+    assertTrue(named(failing, "err-is"), failing.message());
   }
 
   @Test
@@ -124,7 +124,7 @@ class ErrorsTest {
     Errors.errorIsNot(
         failing, ABORTS, new Refused("no room"), Refused.class, "the call fails otherwise");
     assertTrue(failing.failed(), "a match must be reported");
-    assertTrue(failing.message().contains("matches"), failing.message());
+    assertTrue(named(failing, "err-is-not"), failing.message());
   }
 
   @Test
@@ -182,4 +182,11 @@ class ErrorsTest {
 
     assertTrue(seat.failed(), "a string is not something an error can be");
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

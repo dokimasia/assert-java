@@ -151,27 +151,29 @@ public final class Contract {
     Duration p99 = percentile(run.latencies());
 
     if (maxLatency != null && p99.compareTo(maxLatency) > 0) {
-      crossed("p99", p99.toNanos() / 1_000_000.0, maxLatency.toMillis() + "ms", run);
+      crossed("bench-max-latency", p99.toNanos() / 1_000_000.0, maxLatency.toMillis());
     }
     if (maxMean != null && mean.compareTo(maxMean) > 0) {
-      crossed("mean", mean.toNanos() / 1_000_000.0, maxMean.toMillis() + "ms", run);
+      crossed("bench-max-mean", mean.toNanos() / 1_000_000.0, maxMean.toMillis());
     }
     Long bytes = run.bytesPerIteration();
     if (maxBytes != null && bytes != null && bytes > maxBytes) {
-      Report.to(
-          seat,
-          Mode.FATAL,
-          msg + ": allocated " + bytes + " bytes per iteration, want at most " + maxBytes
-              + " over " + run.iterations() + " iterations");
+      Report.failure(seat, Mode.FATAL, "bench-max-bytes", msg,
+          Report.detail("want", maxBytes, "got", bytes));
     }
   }
 
-  private void crossed(String what, double measured, String ceiling, Measurement run) {
-    Report.to(
-        seat,
-        Mode.FATAL,
-        msg + ": " + what + " was " + String.format("%.3f", measured) + "ms, want at most "
-            + ceiling + " over " + run.iterations() + " iterations");
+  /// Report one crossed latency ceiling.
+  ///
+  /// Milliseconds to three places is the granularity these are about, and a
+  /// nanosecond reading carries far more digits than that.
+  ///
+  /// @param assertion the canonical id of the ceiling that was crossed
+  /// @param measured what the run cost, in milliseconds
+  /// @param ceiling what it was allowed, in milliseconds
+  private void crossed(String assertion, double measured, long ceiling) {
+    Report.failure(seat, Mode.FATAL, assertion, msg,
+        Report.detail("want", ceiling, "got", Double.parseDouble(String.format("%.3f", measured))));
   }
 
   private static Duration mean(List<Duration> sorted) {

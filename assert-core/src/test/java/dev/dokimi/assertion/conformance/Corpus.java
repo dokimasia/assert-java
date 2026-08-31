@@ -3,6 +3,7 @@ package dev.dokimi.assertion.conformance;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,11 +21,25 @@ public final class Corpus {
   private static final ObjectMapper JSON = new ObjectMapper();
 
   /// The seventeen assertions whose arguments cross a language boundary as data.
-  private static final List<String> FILES =
-      List.of(
-          "close-to", "contains", "contains-in-order", "empty", "equal", "false",
-          "has-prefix", "has-suffix", "in-range", "length", "matches", "nil",
-          "not-contains", "not-empty", "not-equal", "not-nil", "true");
+  /// Which corpus files exist, derived from the definition rather than kept by
+  /// hand.
+  ///
+  /// A hand-kept list goes stale silently: a corpus file nobody adds to it is a
+  /// file nobody runs. Every corpus file is named for the assertion it covers,
+  /// so the definition already states the set.
+  private static List<String> files() {
+    List<String> found = new ArrayList<>();
+    Corpus.parse("assertions.json")
+        .get("assertions")
+        .fieldNames()
+        .forEachRemaining(
+            id -> {
+              if (Definition.exists("corpus/" + id + ".json")) {
+                found.add(id);
+              }
+            });
+    return found;
+  }
 
   private Corpus() {}
 
@@ -32,16 +47,21 @@ public final class Corpus {
   ///
   /// @param id the case's id, which names its assertion first
   /// @param assertion the assertion under test, by canonical id
+  /// @param assertion the canonical id this case covers
   /// @param args its arguments, already decoded
   /// @param expect whether the assertion must pass or fail
-  /// @param messageContains text the failure must carry
+  /// @param detail what the failure's record must hold, keyed by the names the
+  ///     assertion declares; a field the case leaves out is not checked
+  /// @param subject the behaviour this case hands the assertion in place of
+  ///     arguments, or null for a case that states values
   /// @param skip why a language skips this case, by language
   public record Case(
       String id,
       String assertion,
       List<@Nullable Object> args,
       String expect,
-      List<String> messageContains,
+      Map<String, @Nullable Object> detail,
+      @Nullable String subject,
       Map<String, String> skip) {
 
     /// Why this language skips the case, or null when it does not.
@@ -57,19 +77,26 @@ public final class Corpus {
   /// @return the cases, with their arguments decoded
   public static List<Case> cases() {
     List<Case> found = new ArrayList<>();
-    for (String file : FILES) {
+    for (String file : files()) {
       JsonNode document = parse("corpus/" + file + ".json");
       String assertion = document.get("assertion").asText();
 
       for (JsonNode one : document.get("cases")) {
         List<@Nullable Object> args = new ArrayList<>();
-        for (JsonNode arg : one.get("args")) {
-          args.add(Literal.decode(arg));
+        if (one.has("args")) {
+          for (JsonNode arg : one.get("args")) {
+            args.add(Literal.decode(arg));
+          }
         }
 
-        List<String> contains = new ArrayList<>();
-        if (one.has("message_contains")) {
-          one.get("message_contains").forEach(node -> contains.add(node.asText()));
+        String subject =
+            one.has("subject") ? one.get("subject").get("kind").asText() : null;
+
+        Map<String, @Nullable Object> detail = new LinkedHashMap<>();
+        if (one.has("detail")) {
+          one.get("detail")
+              .properties()
+              .forEach(e -> detail.put(e.getKey(), Literal.decode(e.getValue())));
         }
 
         Map<String, String> skip = new LinkedHashMap<>();
@@ -83,7 +110,8 @@ public final class Corpus {
                 assertion,
                 args,
                 one.get("expect").asText(),
-                List.copyOf(contains),
+                Collections.unmodifiableMap(detail),
+                subject,
                 Map.copyOf(skip)));
       }
     }

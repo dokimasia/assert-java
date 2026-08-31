@@ -1,6 +1,7 @@
 package dev.dokimi.assertion.matcher;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.dokimi.assertion.Recorder;
@@ -48,8 +49,9 @@ class WaitingTest {
         seat, ABORTS, BRIEF, TICK, trial -> trial.fail("queue still holds 4"), "the queue drains");
 
     assertTrue(seat.failed(), "a body that never passes must be reported");
-    assertTrue(seat.message().contains("queue still holds 4"), seat.message());
-    assertTrue(seat.message().contains("attempts"), seat.message());
+    assertEquals(
+        "queue still holds 4", seat.failures().get(0).detail().get("last"), seat.message());
+    assertTrue(named(seat, "eventually"), seat.message());
   }
 
   @Test
@@ -94,7 +96,7 @@ class WaitingTest {
     Recorder failing = new Recorder();
     Waiting.eventuallyTrue(failing, ABORTS, BRIEF, () -> false, "the file appears");
     assertTrue(failing.failed(), "a predicate that never holds must be reported");
-    assertTrue(failing.message().contains("still false"), failing.message());
+    assertTrue(named(failing, "eventually-true"), failing.message());
   }
 
   @Test
@@ -134,7 +136,8 @@ class WaitingTest {
     try {
       ended.run();
       assertTrue(seat.failed(), "work outliving the scope must be reported");
-      assertTrue(seat.message().contains("leaked-worker"), seat.message());
+      assertTrue(String.valueOf(seat.failures().get(0).detail().get("leaked")).contains("leaked-worker"),
+          seat.message());
     } finally {
       release.countDown();
       leaked.join(Duration.ofSeconds(5).toMillis());
@@ -188,4 +191,11 @@ class WaitingTest {
       carrier.join(Duration.ofSeconds(5).toMillis());
     }
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

@@ -1,6 +1,8 @@
 package dev.dokimi.assertion.matcher;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.dokimi.assertion.Recorder;
@@ -27,12 +29,12 @@ class TextTest {
     Recorder wrongPrefix = new Recorder();
     Text.hasPrefix(wrongPrefix, ABORTS, "GET /users", "POST ", "the log line names the method");
     assertTrue(wrongPrefix.failed(), "a prefix that is not there must be reported");
-    assertTrue(wrongPrefix.message().contains("does not start with"), wrongPrefix.message());
+    assertTrue(named(wrongPrefix, "has-prefix"), wrongPrefix.message());
 
     Recorder wrongSuffix = new Recorder();
     Text.hasSuffix(wrongSuffix, ABORTS, "GET /users", "/orders", "the log line names the path");
     assertTrue(wrongSuffix.failed(), "a suffix that is not there must be reported");
-    assertTrue(wrongSuffix.message().contains("does not end with"), wrongSuffix.message());
+    assertTrue(named(wrongSuffix, "has-suffix"), wrongSuffix.message());
   }
 
   @Test
@@ -41,14 +43,12 @@ class TextTest {
     Recorder number = new Recorder();
     Text.hasPrefix(number, ABORTS, 42, "4", "the log line names the method");
     assertTrue(number.failed(), "a number has no prefix");
-    assertTrue(number.message().contains("requires text"), number.message());
-    assertTrue(number.message().contains("Integer"), number.message());
+    assertEquals(42, number.failures().get(0).detail().get("got"), number.message());
 
     Recorder absent = new Recorder();
     Text.hasSuffix(absent, ABORTS, null, "s", "the log line names the path");
     assertTrue(absent.failed(), "null has no suffix");
-    assertTrue(absent.message().contains("requires text"), absent.message());
-    assertTrue(absent.message().contains("null"), absent.message());
+    assertNull(absent.failures().get(0).detail().get("got"), absent.message());
   }
 
   @Test
@@ -79,9 +79,16 @@ class TextTest {
     Text.matches(seat, ABORTS, "GET /users", "[unclosed", "the line names the collection");
 
     assertTrue(seat.failed(), "a pattern that cannot compile has to say so");
-    assertTrue(seat.message().contains("does not compile"), seat.message());
-    // Without this the message reads as a subject that failed to match,
-    // and the typo goes looking for a bug in the code under test.
-    assertFalse(seat.message().contains("does not match"), seat.message());
+    assertTrue(named(seat, "matches"), seat.message());
+    // The record carries the pattern, so a typo in it is visible as
+    // the pattern rather than read as a subject that failed to match.
+    assertEquals("[unclosed", seat.failures().get(0).detail().get("pattern"), seat.message());
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

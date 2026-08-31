@@ -1,6 +1,7 @@
 package dev.dokimi.assertion.bench;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -54,8 +55,7 @@ class ContractTest {
         .check();
 
     assertTrue(seat.failed(), "a p99 over the ceiling must be reported");
-    assertTrue(seat.message().contains("p99"), seat.message());
-    assertTrue(seat.message().contains(SAMPLES + " iterations"), seat.message());
+    assertEquals("bench-max-latency", seat.failures().get(0).assertion(), seat.message());
   }
 
   @Test
@@ -68,7 +68,7 @@ class ContractTest {
         .check();
 
     assertTrue(seat.failed(), "a mean over the ceiling must be reported");
-    assertTrue(seat.message().contains("mean"), seat.message());
+    assertEquals("bench-max-mean", seat.failures().get(0).assertion(), seat.message());
   }
 
   @Test
@@ -94,8 +94,8 @@ class ContractTest {
         .check();
 
     assertTrue(seat.failed(), "an allocation over the ceiling must be reported");
-    assertTrue(seat.message().contains("bytes per iteration"), seat.message());
-    assertTrue(seat.message().contains("want at most 8"), seat.message());
+    assertTrue(named(seat, "bench-max-bytes"), seat.message());
+    assertEquals(8L, seat.failures().get(0).detail().get("want"), seat.message());
   }
 
   @Test
@@ -133,4 +133,11 @@ class ContractTest {
 
     assertFalse(seat.failed(), "a contract with no ceiling has nothing to cross");
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

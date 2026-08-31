@@ -43,7 +43,7 @@ public final class Raises {
     } catch (Throwable thrown) {
       return thrown;
     }
-    Report.to(seat, mode, msg + ": returned without throwing");
+    Report.failure(seat, mode, "throws", msg);
     return null;
   }
 
@@ -58,7 +58,7 @@ public final class Raises {
     try {
       body.run();
     } catch (Throwable thrown) {
-      Report.to(seat, mode, msg + ": threw " + Show.value(thrown));
+      Report.failure(seat, mode, "not-throws", msg, Report.detail("got", thrown));
     }
   }
 }

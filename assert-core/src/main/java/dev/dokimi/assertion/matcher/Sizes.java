@@ -37,9 +37,10 @@ public final class Sizes {
   }
 
   /// Report that a value cannot answer for its length.
-  private static void unsupported(Seat seat, Mode mode, String msg, @Nullable Object got) {
-    String type = got == null ? "null" : got.getClass().getSimpleName();
-    Report.to(seat, mode, msg + ": length is not supported for " + type);
+  private static void unsupported(
+      Seat seat, Mode mode, String msg, String assertion,
+      Map<String, @Nullable Object> detail) {
+    Report.failure(seat, mode, assertion, msg, detail);
   }
 
   /// Fail when got does not hold want entries.
@@ -54,11 +55,11 @@ public final class Sizes {
     seat.helper();
     Integer size = sizeOf(got);
     if (size == null) {
-      unsupported(seat, mode, msg, got);
+      unsupported(seat, mode, msg, "length", Report.detail("want", want, "got", got));
       return;
     }
     if (size != want) {
-      Report.to(seat, mode, msg + ": expected length " + want + ", got " + size);
+      Report.failure(seat, mode, "length", msg, Report.detail("want", want, "got", size));
     }
   }
 
@@ -74,11 +75,11 @@ public final class Sizes {
     seat.helper();
     Integer size = sizeOf(got);
     if (size == null) {
-      unsupported(seat, mode, msg, got);
+      unsupported(seat, mode, msg, "empty", Report.detail("length", got));
       return;
     }
     if (size != 0) {
-      Report.to(seat, mode, msg + ": expected empty, got length " + size);
+      Report.failure(seat, mode, "empty", msg, Report.detail("length", size));
     }
   }
 
@@ -92,11 +93,11 @@ public final class Sizes {
     seat.helper();
     Integer size = sizeOf(got);
     if (size == null) {
-      unsupported(seat, mode, msg, got);
+      unsupported(seat, mode, msg, "not-empty", Report.detail());
       return;
     }
     if (size == 0) {
-      Report.to(seat, mode, msg + ": expected non-empty, got length 0");
+      Report.failure(seat, mode, "not-empty", msg);
     }
   }
 }

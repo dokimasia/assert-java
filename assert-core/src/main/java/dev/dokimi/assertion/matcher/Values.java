@@ -30,7 +30,7 @@ public final class Values {
       Option... options) {
     seat.helper();
     if (!Compare.equal(got, want, Relaxations.of(options))) {
-      Report.to(seat, mode, msg + ": want " + Show.value(want) + ", got " + Show.value(got));
+      Report.failure(seat, mode, "equal", msg, Report.detail("want", want, "got", got));
     }
   }
 
@@ -51,8 +51,7 @@ public final class Values {
       Option... options) {
     seat.helper();
     if (Compare.equal(got, want, Relaxations.of(options))) {
-      Report.to(
-          seat, mode, msg + ": values are equal, want different: got " + Show.value(got));
+      Report.failure(seat, mode, "not-equal", msg, Report.detail("got", got));
     }
   }
 
@@ -65,7 +64,7 @@ public final class Values {
   public static void isTrue(Seat seat, Mode mode, boolean condition, String msg) {
     seat.helper();
     if (!condition) {
-      Report.to(seat, mode, msg);
+      Report.failure(seat, mode, "true", msg);
     }
   }
 
@@ -78,7 +77,7 @@ public final class Values {
   public static void isFalse(Seat seat, Mode mode, boolean condition, String msg) {
     seat.helper();
     if (condition) {
-      Report.to(seat, mode, msg);
+      Report.failure(seat, mode, "false", msg);
     }
   }
 
@@ -91,7 +90,7 @@ public final class Values {
   public static void isNull(Seat seat, Mode mode, @Nullable Object got, String msg) {
     seat.helper();
     if (got != null) {
-      Report.to(seat, mode, msg + ": expected nothing, got " + Show.value(got));
+      Report.failure(seat, mode, "nil", msg, Report.detail("got", got));
     }
   }
 
@@ -104,7 +103,7 @@ public final class Values {
   public static void isNotNull(Seat seat, Mode mode, @Nullable Object got, String msg) {
     seat.helper();
     if (got == null) {
-      Report.to(seat, mode, msg + ": expected something, got null");
+      Report.failure(seat, mode, "not-nil", msg);
     }
   }
 }

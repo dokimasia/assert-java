@@ -42,7 +42,7 @@ class RaisesTest {
 
     assertTrue(seat.failed(), "a body that returns must be reported");
     assertNull(caught, "nothing was thrown, so there is nothing to hand back");
-    assertTrue(seat.message().contains("returned without throwing"), seat.message());
+    assertTrue(named(seat, "throws"), seat.message());
   }
 
   @Test
@@ -96,4 +96,11 @@ class RaisesTest {
     assertTrue(failing.failed(), "a throw must be reported");
     assertTrue(failing.message().contains("bad input"), failing.message());
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

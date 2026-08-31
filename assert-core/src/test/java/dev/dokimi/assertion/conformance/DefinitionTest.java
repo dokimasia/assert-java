@@ -7,7 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.dokimi.assertion.Check;
+import dev.dokimi.assertion.Clock;
+import dev.dokimi.assertion.Clocked;
 import dev.dokimi.assertion.Collector;
+import dev.dokimi.assertion.Failure;
+import dev.dokimi.assertion.Reporter;
+import dev.dokimi.assertion.SystemClock;
+import dev.dokimi.assertion.Where;
+import dev.dokimi.assertion.Controlled;
 import dev.dokimi.assertion.Option;
 import dev.dokimi.assertion.Recorder;
 import dev.dokimi.assertion.Seat;
@@ -138,13 +145,20 @@ class DefinitionTest {
 
   /** What each surface type id resolves to in this library. */
   private static final Map<String, Class<?>> SURFACE_TYPES =
-      Map.of(
-          "seat", Seat.class,
-          "standard-seat", Standard.class,
-          "recorder-seat", Recorder.class,
-          "collector-seat", Collector.class,
-          "scrubber", Golden.Scrubber.class,
-          "contract", Contract.class);
+      Map.ofEntries(
+          Map.entry("seat", Seat.class),
+          Map.entry("standard-seat", Standard.class),
+          Map.entry("recorder-seat", Recorder.class),
+          Map.entry("collector-seat", Collector.class),
+          Map.entry("scrubber", Golden.Scrubber.class),
+          Map.entry("contract", Contract.class),
+          Map.entry("clock", Clock.class),
+          Map.entry("controlled-clock", Controlled.class),
+          Map.entry("system-clock", SystemClock.class),
+          Map.entry("failure", Failure.class),
+          Map.entry("where", Where.class),
+          Map.entry("reporter", Reporter.class),
+          Map.entry("clocked", Clocked.class));
 
   private static Map<String, String> surfaceNames() {
     Map<String, String> mapped = new LinkedHashMap<>();
@@ -227,7 +241,19 @@ class DefinitionTest {
 
     String leaf = name.substring(name.lastIndexOf('.') + 1);
     if (id.contains(".") && SURFACE_TYPES.containsKey(id.split("\\.", 2)[0])) {
-      Class<?> owner = SURFACE_TYPES.get(id.split("\\.", 2)[0]);
+      String ownerId = id.split("\\.", 2)[0];
+      // The seat states what a seat may answer; the seats that carry it
+      // are where the member lives. Every one of them has to have it.
+      if (ownerId.equals("seat")) {
+        for (Class<?> carrying : List.of(Recorder.class, Collector.class)) {
+          assertTrue(
+              present(carrying, leaf),
+              id + ": " + name + " is named and " + carrying.getSimpleName()
+                  + " does not implement it");
+        }
+        return;
+      }
+      Class<?> owner = SURFACE_TYPES.get(ownerId);
       assertTrue(present(owner, leaf), id + ": " + name + " is named and not implemented");
       return;
     }

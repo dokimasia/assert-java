@@ -1,6 +1,7 @@
 package dev.dokimi.assertion.matcher;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.dokimi.assertion.Recorder;
@@ -26,7 +27,7 @@ class NumbersTest {
     Recorder failing = new Recorder();
     Numbers.closeTo(failing, ABORTS, 1.5, 1.0, 0.1, "the rate is about one");
     assertTrue(failing.failed(), "a value outside the tolerance must be reported");
-    assertTrue(failing.message().contains("is not within"), failing.message());
+    assertTrue(named(failing, "close-to"), failing.message());
   }
 
   @Test
@@ -44,7 +45,7 @@ class NumbersTest {
     Recorder value = new Recorder();
     Numbers.closeTo(value, ABORTS, Double.NaN, 1.0, 0.1, "the rate is about one");
     assertTrue(value.failed(), "a NaN reading is not close to anything");
-    assertTrue(value.message().contains("NaN is outside every tolerance"), value.message());
+    assertTrue(named(value, "close-to"), value.message());
 
     Recorder want = new Recorder();
     Numbers.closeTo(want, ABORTS, 1.0, Double.NaN, 0.1, "the rate is about one");
@@ -74,7 +75,8 @@ class NumbersTest {
     Recorder failing = new Recorder();
     Numbers.inRange(failing, ABORTS, 50, 1, 10, "the page size is sane");
     assertTrue(failing.failed(), "a value outside the range must be reported");
-    assertTrue(failing.message().contains("[1.0, 10.0]"), failing.message());
+    assertEquals(1.0, failing.failures().get(0).detail().get("low"), failing.message());
+    assertEquals(10.0, failing.failures().get(0).detail().get("high"), failing.message());
   }
 
   @Test
@@ -96,7 +98,7 @@ class NumbersTest {
     Numbers.inRange(seat, ABORTS, 5, 10, 1, "the page size is sane");
 
     assertTrue(seat.failed(), "a range that can hold nothing is the mistake, not the value");
-    assertTrue(seat.message().contains("empty range"), seat.message());
+    assertTrue(named(seat, "in-range"), seat.message());
   }
 
   @Test
@@ -120,12 +122,19 @@ class NumbersTest {
     Recorder text = new Recorder();
     Numbers.closeTo(text, ABORTS, "5", 5.0, 0.1, "the rate is about five");
     assertTrue(text.failed(), "text is not a number, however it reads");
-    assertTrue(text.message().contains("requires a number"), text.message());
-    assertTrue(text.message().contains("String"), text.message());
+    assertTrue(named(text, "close-to"), text.message());
+    assertEquals("5", text.failures().get(0).detail().get("got"), text.message());
 
     Recorder absent = new Recorder();
     Numbers.inRange(absent, ABORTS, null, 1, 10, "the page size is sane");
     assertTrue(absent.failed(), "null is not a number");
-    assertTrue(absent.message().contains("requires a number"), absent.message());
+    assertTrue(named(absent, "in-range"), absent.message());
   }
+
+  /** Whether the seat's first record names that assertion. */
+  private static boolean named(Recorder seat, String assertion) {
+    return !seat.failures().isEmpty()
+        && seat.failures().get(0).assertion().equals(assertion);
+  }
+
 }

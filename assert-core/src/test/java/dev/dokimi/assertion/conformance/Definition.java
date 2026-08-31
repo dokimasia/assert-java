@@ -48,4 +48,13 @@ public final class Definition {
   public static String version() {
     return read("VERSION").trim();
   }
+
+  /// Whether the vendored definition carries a file of that name.
+  ///
+  /// @param name the file, relative to the vendored root
+  /// @return whether it is there
+  public static boolean exists(String name) {
+    return Definition.class.getResourceAsStream("spec/" + name) != null;
+  }
+
 }

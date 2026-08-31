@@ -1,6 +1,7 @@
 package dev.dokimi.assertion.matcher;
 
 import dev.dokimi.assertion.Seat;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import org.jspecify.annotations.NullMarked;
@@ -16,9 +17,10 @@ public final class Text {
     return value instanceof CharSequence text ? text.toString() : null;
   }
 
-  private static void requiresText(Seat seat, Mode mode, String msg, @Nullable Object got) {
-    String type = got == null ? "null" : got.getClass().getSimpleName();
-    Report.to(seat, mode, msg + ": requires text, got " + type);
+  private static void requiresText(
+      Seat seat, Mode mode, String msg, String assertion,
+      Map<String, @Nullable Object> detail) {
+    Report.failure(seat, mode, assertion, msg, detail);
   }
 
   /// Fail when got does not start with prefix.
@@ -33,14 +35,12 @@ public final class Text {
     seat.helper();
     String text = asText(got);
     if (text == null) {
-      requiresText(seat, mode, msg, got);
+      requiresText(seat, mode, msg, "has-prefix", Report.detail("got", got, "prefix", prefix));
       return;
     }
     if (!text.startsWith(prefix)) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(text) + " does not start with " + Show.value(prefix));
+      Report.failure(seat, mode, "has-prefix", msg,
+          Report.detail("got", text, "prefix", prefix));
     }
   }
 
@@ -56,14 +56,12 @@ public final class Text {
     seat.helper();
     String text = asText(got);
     if (text == null) {
-      requiresText(seat, mode, msg, got);
+      requiresText(seat, mode, msg, "has-suffix", Report.detail("got", got, "suffix", suffix));
       return;
     }
     if (!text.endsWith(suffix)) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(text) + " does not end with " + Show.value(suffix));
+      Report.failure(seat, mode, "has-suffix", msg,
+          Report.detail("got", text, "suffix", suffix));
     }
   }
 
@@ -83,7 +81,7 @@ public final class Text {
     seat.helper();
     String text = asText(got);
     if (text == null) {
-      requiresText(seat, mode, msg, got);
+      requiresText(seat, mode, msg, "matches", Report.detail("got", got, "pattern", pattern));
       return;
     }
 
@@ -91,18 +89,13 @@ public final class Text {
     try {
       compiled = Pattern.compile(pattern);
     } catch (PatternSyntaxException broken) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": pattern " + Show.value(pattern) + " does not compile: "
-              + broken.getDescription());
+      Report.failure(seat, mode, "matches", msg,
+          Report.detail("got", got, "pattern", pattern));
       return;
     }
     if (!compiled.matcher(text).find()) {
-      Report.to(
-          seat,
-          mode,
-          msg + ": " + Show.value(text) + " does not match " + Show.value(pattern));
+      Report.failure(seat, mode, "matches", msg,
+          Report.detail("got", text, "pattern", pattern));
     }
   }
 }
