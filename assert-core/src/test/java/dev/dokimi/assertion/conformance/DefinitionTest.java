@@ -7,7 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.dokimi.assertion.Check;
+import dev.dokimi.assertion.Collector;
 import dev.dokimi.assertion.Option;
+import dev.dokimi.assertion.Recorder;
+import dev.dokimi.assertion.Seat;
+import dev.dokimi.assertion.Standard;
 import dev.dokimi.assertion.Soft;
 import dev.dokimi.assertion.bench.Contract;
 import dev.dokimi.assertion.golden.Golden;
@@ -132,6 +136,50 @@ class DefinitionTest {
     return relaxationNames().keySet().stream().sorted();
   }
 
+  /** What each surface type id resolves to in this library. */
+  private static final Map<String, Class<?>> SURFACE_TYPES =
+      Map.of(
+          "seat", Seat.class,
+          "standard-seat", Standard.class,
+          "recorder-seat", Recorder.class,
+          "collector-seat", Collector.class,
+          "scrubber", Golden.Scrubber.class,
+          "contract", Contract.class);
+
+  private static Map<String, String> surfaceNames() {
+    Map<String, String> mapped = new LinkedHashMap<>();
+    JsonNode surface = Corpus.parse("naming.json").get("surface");
+    for (String section : new String[] {"types", "members", "helpers"}) {
+      surface
+          .get(section)
+          .properties()
+          .forEach(
+              entry -> {
+                JsonNode name = entry.getValue().get(Definition.LANGUAGE);
+                mapped.put(entry.getKey(), name == null ? "" : name.asText());
+              });
+    }
+    return mapped;
+  }
+
+  /** Whether the overlay declines the surface id. */
+  private static boolean declinesSurface(String id) {
+    JsonNode entries = overlay().get("surface");
+    if (entries == null) {
+      return false;
+    }
+    for (JsonNode entry : entries) {
+      if (entry.get("id").asText().equals(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static Stream<String> everySurfaceId() {
+    return surfaceNames().keySet().stream().sorted();
+  }
+
   static Stream<String> everyAssertion() {
     List<String> ids = new ArrayList<>();
     assertions().fieldNames().forEachRemaining(ids::add);
@@ -150,6 +198,44 @@ class DefinitionTest {
     List<String> missing =
         everyAssertion().filter(id -> !names().containsKey(id)).toList();
     assertTrue(missing.isEmpty(), () -> "no Java name for: " + missing);
+  }
+
+  @ParameterizedTest
+  @MethodSource("everySurfaceId")
+  @DisplayName("every surface id is offered or declined")
+  void surfaceOfferedOrDeclined(String id) {
+    String name = surfaceNames().get(id);
+    boolean declined = declinesSurface(id);
+
+    assertFalse(!name.isEmpty() && declined, id + ": named " + name + " and declined");
+    assertTrue(
+        !name.isEmpty() || declined,
+        id + ": the table gives no Java name and the overlay does not decline it");
+    if (name.isEmpty()) {
+      return;
+    }
+
+    if (SURFACE_TYPES.containsKey(id)) {
+      Class<?> type = SURFACE_TYPES.get(id);
+      String spelled =
+          type.getEnclosingClass() == null
+              ? type.getSimpleName()
+              : type.getEnclosingClass().getSimpleName() + "." + type.getSimpleName();
+      assertEquals(name, spelled, id + ": the table and the class disagree on the name");
+      return;
+    }
+
+    String leaf = name.substring(name.lastIndexOf('.') + 1);
+    if (id.contains(".") && SURFACE_TYPES.containsKey(id.split("\\.", 2)[0])) {
+      Class<?> owner = SURFACE_TYPES.get(id.split("\\.", 2)[0]);
+      assertTrue(present(owner, leaf), id + ": " + name + " is named and not implemented");
+      return;
+    }
+    // A helper: a static member reached through an owner the assertions
+    // already know.
+    Class<?> owner = OWNERS.get(name.split("\\.", 2)[0]);
+    assertNotNull(owner, id + ": no class known for " + name);
+    assertTrue(present(owner, leaf), id + ": " + name + " is named and not implemented");
   }
 
   @ParameterizedTest
