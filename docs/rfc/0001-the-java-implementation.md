@@ -220,10 +220,13 @@ all.
 
 ### What the corpus reaches
 
-Seventy cases across seventeen assertions, run against both surfaces.
-The other twenty-four take a callable, a class, a duration or a thread,
-and no corpus file can hold one, so they are covered by tests here and by
-the completeness gate that checks every name in the table exists.
+Eighty-seven cases across twenty-five assertions, run against both
+surfaces. Seventeen of those cases name a behaviour rather than stating
+a value, which is how a case reaches an assertion that takes a callable.
+
+The other sixteen want a class, a real duration or a real thread, and no
+corpus file can hold one, so they are covered by tests here and by the
+completeness gate that checks every name in the table exists.
 
 Those tests drive each assertion twice: once with a subject that
 satisfies it and once with one that does not. A one-sided test is
