@@ -7,9 +7,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import dev.dokimi.assertion.Check;
+import dev.dokimi.assertion.Option;
 import dev.dokimi.assertion.Soft;
 import dev.dokimi.assertion.bench.Contract;
 import dev.dokimi.assertion.golden.Golden;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,7 +36,10 @@ class DefinitionTest {
 
   /** The classes a qualified name may name. */
   private static final Map<String, Class<?>> OWNERS =
-      Map.of("Golden", Golden.class, "Contract", Contract.class);
+      Map.of(
+          "Golden", Golden.class,
+          "Contract", Contract.class,
+          "Option", Option.class);
 
   /** Members the recording surface is not expected to carry, with the reason. */
   private static final Map<String, String> CHECK_ONLY =
@@ -89,6 +94,44 @@ class DefinitionTest {
     return Map.entry(owner, parts[1]);
   }
 
+  private static Map<String, String> relaxationNames() {
+    Map<String, String> mapped = new LinkedHashMap<>();
+    JsonNode named = Corpus.parse("naming.json").get("relaxations");
+    Corpus.parse("assertions.json")
+        .get("relaxations")
+        .fieldNames()
+        .forEachRemaining(
+            id -> {
+              JsonNode entry = named == null ? null : named.get(id);
+              JsonNode name = entry == null ? null : entry.get(Definition.LANGUAGE);
+              mapped.put(id, name == null ? "" : name.asText());
+            });
+    return mapped;
+  }
+
+  /** Whether the overlay declines the relaxation. */
+  private static boolean declines(String id) {
+    JsonNode entries = overlay().get("relaxations");
+    if (entries == null) {
+      return false;
+    }
+    for (JsonNode entry : entries) {
+      if (entry.get("id").asText().equals(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Whether a class carries a public field of that name, which is what an enum constant is. */
+  private static boolean carriesField(Class<?> owner, String field) {
+    return Arrays.stream(owner.getFields()).map(Field::getName).anyMatch(field::equals);
+  }
+
+  static Stream<String> everyRelaxation() {
+    return relaxationNames().keySet().stream().sorted();
+  }
+
   static Stream<String> everyAssertion() {
     List<String> ids = new ArrayList<>();
     assertions().fieldNames().forEachRemaining(ids::add);
@@ -107,6 +150,30 @@ class DefinitionTest {
     List<String> missing =
         everyAssertion().filter(id -> !names().containsKey(id)).toList();
     assertTrue(missing.isEmpty(), () -> "no Java name for: " + missing);
+  }
+
+  @ParameterizedTest
+  @MethodSource("everyRelaxation")
+  @DisplayName("every relaxation is offered or declined")
+  void relaxationOfferedOrDeclined(String id) {
+    String name = relaxationNames().get(id);
+    boolean declined = declines(id);
+
+    // Named and declined is a contradiction; neither is a silent gap.
+    assertFalse(
+        !name.isEmpty() && declined, id + ": named " + name + " and declined");
+    assertTrue(
+        !name.isEmpty() || declined,
+        id + ": the table gives no Java name and the overlay does not decline it");
+
+    if (!name.isEmpty()) {
+      String[] parts = name.split("\\.", 2);
+      Class<?> owner = OWNERS.get(parts[0]);
+      assertNotNull(owner, id + ": no class known for " + parts[0]);
+      assertTrue(
+          carriesField(owner, parts[1]),
+          id + ": " + name + " is named and not implemented");
+    }
   }
 
   @ParameterizedTest
