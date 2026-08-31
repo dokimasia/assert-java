@@ -184,3 +184,20 @@ tasks.register<Zip>("centralBundle") {
     archiveFileName.set("central-bundle-$libVersion.zip")
     destinationDirectory.set(layout.buildDirectory.dir("central"))
 }
+
+// Refreshing and checking the vendored definition. Both are shell, so
+// they behave the same here as in the other four implementations rather
+// than being reimplemented in Kotlin.
+val vendored = "assert-core/src/test/resources/dev/dokimi/assertion/conformance/spec"
+
+tasks.register<Exec>("specSync") {
+    group = "verification"
+    description = "Refresh the vendored definition from assert-spec"
+    commandLine("./tools/spec-sync.sh", vendored, "java")
+}
+
+tasks.register<Exec>("specCheck") {
+    group = "verification"
+    description = "Check the vendored definition is intact and say if it is behind"
+    commandLine("./tools/spec-check.sh", vendored)
+}
