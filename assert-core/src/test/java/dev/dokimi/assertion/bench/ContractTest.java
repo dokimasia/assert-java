@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import dev.dokimi.assertion.Recorder;
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
+import java.util.List;
+import java.util.ArrayList;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -138,6 +140,54 @@ class ContractTest {
   private static boolean named(Recorder seat, String assertion) {
     return !seat.failures().isEmpty()
         && seat.failures().get(0).assertion().equals(assertion);
+  }
+
+
+  /** A fixture whose build takes long enough to notice. */
+  private static Integer slowSetup() {
+    try {
+      Thread.sleep(20);
+    } catch (InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+    }
+    return 1;
+  }
+
+  @Test
+  @DisplayName("measuring takes the setup's time out of the ceiling")
+  void measuringExcludesTheSetup() {
+    Recorder seat = new Recorder();
+    new Contract(seat, "settling stays quick")
+        .maxLatency(Duration.ofMillis(5))
+        .measuring(3, ContractTest::slowSetup, held -> {})
+        .check();
+
+    assertFalse(seat.failed(), () -> "an excluded setup is not timed: " + seat.message());
+  }
+
+  @Test
+  @DisplayName("the same setup unexcluded crosses the ceiling")
+  void theSameSetupUnexcludedFails() {
+    // Without this the case above passes against a measuring that timed
+    // the setup anyway.
+    Recorder seat = new Recorder();
+    new Contract(seat, "settling stays quick")
+        .maxLatency(Duration.ofMillis(5))
+        .loop(3, ContractTest::slowSetup)
+        .check();
+
+    assertTrue(seat.failed(), "a setup nobody excluded is timed");
+  }
+
+  @Test
+  @DisplayName("measuring hands the body what the setup built")
+  void measuringThreadsTheFixture() {
+    Recorder seat = new Recorder();
+    List<Integer> seen = new ArrayList<>();
+
+    new Contract(seat, "the fixture arrives").measuring(3, () -> 7, seen::add).check();
+
+    assertEquals(List.of(7, 7, 7), seen);
   }
 
 }

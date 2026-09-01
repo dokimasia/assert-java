@@ -9,6 +9,8 @@ import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.function.Supplier;
+import java.util.function.Consumer;
 import java.util.List;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -94,6 +96,51 @@ public final class Contract {
   /// @return the contract, so ceilings can be chained
   public Contract maxBytes(long ceiling) {
     this.maxBytes = ceiling;
+    return this;
+  }
+
+  /// Measure a body whose input is built fresh each iteration.
+  ///
+  /// A benchmark whose operation consumes its input builds a new one every time,
+  /// and [#loop(int, Raises.Body)] would state what the build and the operation
+  /// cost together. This builds every input first, outside the measurement, and
+  /// measures only the bodies.
+  ///
+  /// Every input exists at once, so a large fixture and a long run cost that much
+  /// memory. A body needing no input wants [#loop(int, Raises.Body)], which holds
+  /// nothing.
+  ///
+  /// @param <T> what the setup builds and the body consumes
+  /// @param iterations how many times to run the body
+  /// @param setup builds one input, outside the measurement
+  /// @param body the measured work, given what setup built
+  /// @return the contract, so the call chains into check
+  public <T extends @Nullable Object> Contract measuring(
+      int iterations, Supplier<T> setup, Consumer<T> body) {
+    // Built first and all at once, so no counter is read between one
+    // iteration's setup and the next iteration's work.
+    List<T> inputs = new ArrayList<>(iterations);
+    for (int i = 0; i < iterations; i++) {
+      inputs.add(setup.get());
+    }
+
+    List<Duration> latencies = new ArrayList<>(iterations);
+    ThreadMXBean threads = allocationCounter();
+    long id = Thread.currentThread().getId();
+    long allocatedBefore = threads == null ? 0 : threads.getThreadAllocatedBytes(id);
+
+    for (T input : inputs) {
+      long started = System.nanoTime();
+      body.accept(input);
+      latencies.add(Duration.ofNanos(System.nanoTime() - started));
+    }
+
+    Long bytes = null;
+    if (threads != null && iterations > 0) {
+      bytes = (threads.getThreadAllocatedBytes(id) - allocatedBefore) / iterations;
+    }
+    Collections.sort(latencies);
+    this.measurement = new Measurement(iterations, latencies, bytes);
     return this;
   }
 
