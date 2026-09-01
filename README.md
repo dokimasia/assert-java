@@ -85,11 +85,38 @@ AssertionFailed: 2 failures:
   2. every item comes back: expected length 3, got 2
 ```
 
+## Several assertions about one value
+
+`that` starts a chain, so a value is named once and every method after
+it answers the chain:
+
+```java
+Check.that(seat, reply.status())
+    .notEqual(0, "the status was set")
+    .equal(200, "the request succeeds");
+```
+
+The chain fixes the value's type, so `want` is held to it and a
+mismatch is a compile error:
+
+```java
+Check.that(seat, reply.body()).equal(200, "...");  // does not compile
+Check.equal(seat, reply.body(), 200, "...");       // compiles, fails at run time
+```
+
+The static form cannot be tightened the same way. Java infers a common
+supertype for two arguments of a generic method, so `equal(seat, "1",
+1, ...)` would still compile whatever the parameters were declared as.
+
+A chain from `Check` stops at the first failing method. One from `Soft`
+runs them all and reports each failure.
+
 ## The assertions
 
 Thirty-four on `Check` and thirty-three on `Soft`, since only `Check`
 can drive an assertion to failure. Three more compare against a golden
-file, and the benchmark contract states three ceilings.
+file, and the benchmark contract states three ceilings. `that` starts a
+chain over any of the value assertions.
 
 <!-- api-reference:start -->
 

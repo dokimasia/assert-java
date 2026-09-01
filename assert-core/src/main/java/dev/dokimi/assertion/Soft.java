@@ -42,6 +42,31 @@ public final class Soft {
 
   private Soft() {}
 
+  /// Start a chain of assertions about one value.
+  ///
+  /// ```java
+  /// Soft.that(seat, reply.status())
+  ///     .notEqual(0, "the status was set")
+  ///     .equal(200, "the request succeeds");
+  /// ```
+  ///
+  /// Use it where several properties of one value are worth stating together. For a
+  /// single property the static form reads better. The chain records every failure and runs them all.
+  ///
+  /// The chain holds the value's type, so `want` is held to it and a mismatch is a
+  /// compile error. The static [#equal] takes two `Object` parameters and cannot be:
+  /// Java infers a common supertype for two arguments of a generic method, so a
+  /// mismatch there would still compile.
+  ///
+  /// @param <T> the type of the value under assertion
+  /// @param seat where a failing method reports
+  /// @param got the value every method in the chain compares against
+  /// @return a chain over got
+  public static <T extends @Nullable Object> Assertion<T> that(Seat seat, T got) {
+    seat.helper();
+    return new Assertion<>(seat, MODE, got);
+  }
+
   /// Fail when got and want differ.
   ///
   /// Comparison is structural and reaches arrays, collections and maps. Values of

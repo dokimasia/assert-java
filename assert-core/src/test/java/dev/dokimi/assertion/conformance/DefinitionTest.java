@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import dev.dokimi.assertion.Assertion;
 import dev.dokimi.assertion.Check;
 import dev.dokimi.assertion.Clock;
 import dev.dokimi.assertion.Clocked;
@@ -50,7 +51,8 @@ class DefinitionTest {
       Map.of(
           "Golden", Golden.class,
           "Contract", Contract.class,
-          "Option", Option.class);
+          "Option", Option.class,
+          "Check", Check.class);
 
   /** Members the recording surface is not expected to carry, with the reason. */
   private static final Map<String, String> CHECK_ONLY =
@@ -158,7 +160,8 @@ class DefinitionTest {
           Map.entry("failure", Failure.class),
           Map.entry("where", Where.class),
           Map.entry("reporter", Reporter.class),
-          Map.entry("clocked", Clocked.class));
+          Map.entry("clocked", Clocked.class),
+          Map.entry("assertion", Assertion.class));
 
   private static Map<String, String> surfaceNames() {
     Map<String, String> mapped = new LinkedHashMap<>();
