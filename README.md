@@ -291,10 +291,10 @@ else.
 
 ## Kotlin
 
-Kotlin calls the Java artifact for thirty-five of the forty-one. The
-other six take work that suspends, and a Kotlin `suspend` lambda
-compiles to a method taking a hidden `Continuation`, so no Java method
-can accept one. `dokimi-assert-kotlin` supplies those:
+Kotlin calls the Java artifact for thirty-five of the forty-two. Six
+take work that suspends, and a Kotlin `suspend` lambda compiles to a
+method taking a hidden `Continuation`, so no Java method can accept one.
+`dokimi-assert-kotlin` supplies those:
 
 ```kotlin
 class WorkerTest {
@@ -311,6 +311,9 @@ Cancellation there is a coroutine's own: a `Job` cancelled and a
 `CancellationException` raised at the next suspension point. In the
 Java artifact it is `Thread.interrupt`, which is what `sleep`, `wait`,
 `take` and every blocking call in `java.util.concurrent` respond to.
+
+The forty-second, `maxAllocs` on a call, neither artifact supplies, for
+the reason the next section gives.
 
 ## The standard
 
@@ -329,9 +332,10 @@ definition and holds itself to it:
 
 ### Where Java differs
 
-`bench.Contract.maxAllocs` is declared rather than implemented. The JVM
-reports bytes allocated per thread and no count of allocations; JFR
-samples allocation events rather than counting them. `maxBytes` is
+`bench.Contract.maxAllocs` and `Check.maxAllocs` are declared rather
+than implemented. The JVM reports bytes allocated per thread and no
+count of allocations; JFR samples allocation events rather than counting
+them. `maxBytes` is
 implemented, and holds a ceiling on the same behaviour by weight:
 `ThreadMXBean.getThreadAllocatedBytes` counts what a thread allocated
 rather than what survived a collection, so the reading does not move

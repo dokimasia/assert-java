@@ -204,9 +204,9 @@ class DefinitionTest {
   }
 
   @Test
-  @DisplayName("the vendored definition states all 41 assertions")
+  @DisplayName("the vendored definition states all 42 assertions")
   void theDefinitionIsComplete() {
-    assertEquals(41, assertions().size());
+    assertEquals(42, assertions().size());
   }
 
   @Test
