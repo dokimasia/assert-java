@@ -185,19 +185,17 @@ tasks.register<Zip>("centralBundle") {
     destinationDirectory.set(layout.buildDirectory.dir("central"))
 }
 
-// Refreshing and checking the vendored definition. Both are shell, so
-// they behave the same here as in the other four implementations rather
-// than being reimplemented in Kotlin.
-val vendored = "assert-core/src/test/resources/dev/dokimi/assertion/conformance/spec"
-
+// Vendoring and checking the definition of assert-spec. spec runs the same
+// way here as in the other four implementations, with the copy that
+// .spec.yaml declares.
 tasks.register<Exec>("specSync") {
     group = "verification"
-    description = "Refresh the vendored definition from assert-spec"
-    commandLine("./tools/spec-sync.sh", vendored, "java")
+    description = "Vendor the definition of assert-spec at the head of its branch main"
+    commandLine("spec", "sync")
 }
 
 tasks.register<Exec>("specCheck") {
     group = "verification"
-    description = "Check the vendored definition is intact and say if it is behind"
-    commandLine("./tools/spec-check.sh", vendored)
+    description = "Check that the vendored definition is intact and comes from a commit of assert-spec"
+    commandLine("spec", "check")
 }
