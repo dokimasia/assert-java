@@ -40,7 +40,7 @@ class CorpusTest {
 
   /** The name this language gives each assertion. */
   private static Map<String, String> names() {
-    JsonNode table = Corpus.parse("naming.json").get("names");
+    JsonNode table = Corpus.parse("spec/naming.json").get("names");
     var mapped = new java.util.LinkedHashMap<String, String>();
     table.properties()
         .forEach(

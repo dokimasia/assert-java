@@ -29,7 +29,7 @@ public final class Corpus {
   /// so the definition already states the set.
   private static List<String> files() {
     List<String> found = new ArrayList<>();
-    Corpus.parse("assertions.json")
+    Corpus.parse("spec/assertions.json")
         .get("assertions")
         .fieldNames()
         .forEachRemaining(

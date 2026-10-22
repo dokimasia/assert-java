@@ -59,12 +59,12 @@ class DefinitionTest {
       Map.of("rejects", "drives a check to failure, which needs a seat that stops");
 
   private static JsonNode assertions() {
-    return Corpus.parse("assertions.json").get("assertions");
+    return Corpus.parse("spec/assertions.json").get("assertions");
   }
 
   private static Map<String, String> names() {
     Map<String, String> mapped = new LinkedHashMap<>();
-    Corpus.parse("naming.json")
+    Corpus.parse("spec/naming.json")
         .get("names")
         .properties()
         .forEach(
@@ -78,7 +78,7 @@ class DefinitionTest {
   }
 
   private static JsonNode overlay() {
-    return Corpus.parse("overlay.json");
+    return Corpus.parse("overlays/" + Definition.LANGUAGE + ".json");
   }
 
   /** Whether the overlay declares this language cannot supply the assertion. */
@@ -109,8 +109,8 @@ class DefinitionTest {
 
   private static Map<String, String> relaxationNames() {
     Map<String, String> mapped = new LinkedHashMap<>();
-    JsonNode named = Corpus.parse("naming.json").get("relaxations");
-    Corpus.parse("assertions.json")
+    JsonNode named = Corpus.parse("spec/naming.json").get("relaxations");
+    Corpus.parse("spec/assertions.json")
         .get("relaxations")
         .fieldNames()
         .forEachRemaining(
@@ -165,7 +165,7 @@ class DefinitionTest {
 
   private static Map<String, String> surfaceNames() {
     Map<String, String> mapped = new LinkedHashMap<>();
-    JsonNode surface = Corpus.parse("naming.json").get("surface");
+    JsonNode surface = Corpus.parse("spec/naming.json").get("surface");
     for (String section : new String[] {"types", "members", "helpers"}) {
       surface
           .get(section)

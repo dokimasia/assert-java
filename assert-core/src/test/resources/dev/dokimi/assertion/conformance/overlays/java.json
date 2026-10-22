@@ -1,0 +1,74 @@
+{
+  "extends": "spec://assertions@9.0.0",
+  "language": "java",
+  "diverge": [
+    {
+      "id": "bench-max-allocs",
+      "stance": "blocked",
+      "why": "The JVM exposes bytes allocated per thread through com.sun.management.ThreadMXBean, but no count of allocations. JFR samples allocation events rather than counting them, so a per-iteration total is an estimate that changes with the sampling rate.",
+      "remedy": "A counter alongside getThreadAllocatedBytes. bench-max-bytes is implemented, and holds a ceiling on the same behaviour by weight rather than by count."
+    },
+    {
+      "id": "max-allocs",
+      "stance": "blocked",
+      "why": "The JVM reports bytes allocated per thread and no count of allocations, for the reason the bench-max-allocs entry gives, so there is no count per call to hold to a ceiling.",
+      "remedy": "The counter beside getThreadAllocatedBytes that bench-max-allocs needs."
+    },
+    {
+      "id": "prop-max-allocs",
+      "stance": "blocked",
+      "why": "The form runs max-allocs on each input, and max-allocs is absent for the reason its entry gives.",
+      "remedy": "The counter beside getThreadAllocatedBytes that bench-max-allocs needs."
+    },
+    {
+      "id": "max-allocs-with-setup",
+      "stance": "blocked",
+      "why": "The JVM reports bytes allocated per thread and no count of allocations, for the reason the bench-max-allocs entry gives, so there is no count per call to hold to a ceiling, with a setup or without one.",
+      "remedy": "The counter beside getThreadAllocatedBytes that bench-max-allocs needs."
+    },
+    {
+      "id": "prop-max-allocs-with-setup",
+      "stance": "blocked",
+      "why": "The form runs max-allocs-with-setup on each input, and max-allocs-with-setup is absent for the reason its entry gives.",
+      "remedy": "The counter beside getThreadAllocatedBytes that bench-max-allocs needs."
+    }
+  ],
+  "limits": [
+    {
+      "id": "no-task-leaks",
+      "what": "Sees platform threads and executor threads. A leaked virtual thread is not reported.",
+      "why": "Virtual threads appear in no standard enumeration. Thread.getAllStackTraces does not contain them, and ThreadMXBean counts their carrier threads instead, which is noise rather than signal."
+    },
+    {
+      "id": "history",
+      "what": "Records every invocation and completion through one counter that all clients share, whose increment is sequentially consistent. A subject whose correctness depends on a memory barrier it lacks can pass under the recorder and fail without it.",
+      "why": "JVM threads run on more than one core at once. Each increment of the counter orders the recording client's memory operations against every other client's, and that order can supply the barrier that the subject lacks."
+    },
+    {
+      "id": "prop.of",
+      "what": "A zone resolves through the time-zone data of the JDK that runs the test, so a ZonedDateTime can show another wall time than the definition's tzdata 2026e states. A char reads as a char shape whose alphabet stops at the end of the Basic Multilingual Plane.",
+      "why": "The JDK ships its own copy of the IANA time-zone data, and an update of the JDK can contain another release. A Java char is one UTF-16 unit, so it cannot represent a character outside the Basic Multilingual Plane."
+    },
+    {
+      "id": "prop.of-shape",
+      "what": "A zone resolves through the time-zone data of the JDK that runs the test, as the prop.of entry states.",
+      "why": "The JDK ships its own copy of the IANA time-zone data, and an update of the JDK can contain another release."
+    }
+  ],
+  "surface": [
+    {
+      "id": "contract.excluding",
+      "why": "The harness owns the loop here, so setup goes in a second closure, handed to measuring, that the harness runs outside the measurement. Marking the setup in place would need the body to reach the contract it was handed to."
+    },
+    {
+      "id": "cancellation-of",
+      "why": "Seat gives cancelled() a default, as it gives helper() one, so a helper calls the member on any seat and needs no function to read it."
+    }
+  ],
+  "sections": ["tasks", "threads"],
+  "records": {
+    "artifact": "The JUnit Platform's report entries, which a Gradle test task of Gradle 9.4 or later writes to build/test-results/<task>/TEST-<class>.xml, one file per test class. The Open Test Reporting XML of the JUnit Platform contains the same entries.",
+    "location": "One report entry per call record, in the order the calls report their verdicts, written as a property element under the properties element of the test's testcase element. Its name is dokimi.assert.<seq> and its value is the call record's JSON. The testcase element names the test by its classname, the test class, and its name, the test's display name.",
+    "status": "The child of each testcase element: failure for a failed test, skipped for a skipped or aborted one, and none for a pass."
+  }
+}

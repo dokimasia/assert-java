@@ -13,15 +13,16 @@ import org.jspecify.annotations.NullMarked;
 /// standard library. Holding this library to the standard is a test's job anyway.
 ///
 /// The files are vendored rather than fetched, so a build is reproducible and a test
-/// run needs no network. The `specSync` task refreshes them.
+/// run needs no network. The `specSync` task refreshes them with spec.
 @NullMarked
 public final class Definition {
 
   /// This language's column in the naming table.
   public static final String LANGUAGE = "java";
 
-  /// Where the vendored definition sits on the classpath.
-  private static final String ROOT = "/dev/dokimi/assertion/conformance/spec/";
+  /// The directory of the vendored definition on the classpath. Each file is at its path in
+  /// assert-spec below it, such as spec/assertions.json.
+  private static final String ROOT = "/dev/dokimi/assertion/conformance/";
 
   private Definition() {}
 
@@ -54,7 +55,7 @@ public final class Definition {
   /// @param name the file, relative to the vendored root
   /// @return whether it is there
   public static boolean exists(String name) {
-    return Definition.class.getResourceAsStream("spec/" + name) != null;
+    return Definition.class.getResourceAsStream(ROOT + name) != null;
   }
 
 }
