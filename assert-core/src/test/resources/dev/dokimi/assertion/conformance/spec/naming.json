@@ -368,6 +368,14 @@
             "rust": "max_allocs_with_setup",
             "typescript": "maxAllocsWithSetup"
         },
+        "max-live-bytes": {
+            "go": "MaxLiveBytes",
+            "java": "maxLiveBytes",
+            "kotlin": "maxLiveBytes",
+            "python": "max_live_bytes",
+            "rust": "max_live_bytes",
+            "typescript": "maxLiveBytes"
+        },
         "monotonic": {
             "go": "Monotonic",
             "java": "isMonotonic",
@@ -930,9 +938,30 @@
     },
     "surface": {
         "helpers": {
+            "allocs-checked": {
+                "go": "AllocsChecked",
+                "java": "Check.allocsChecked",
+                "kotlin": "Check.allocsChecked",
+                "python": "allocs_checked",
+                "rust": "allocs_checked",
+                "typescript": "allocsChecked"
+            },
             "cancellation-of": {
                 "go": "Context",
                 "typescript": "signalOf"
+            },
+            "cleanup": {
+                "go": "Cleanup",
+                "python": "cleanup",
+                "typescript": "cleanup"
+            },
+            "fault": {
+                "go": "Fault",
+                "java": "Check.fault",
+                "kotlin": "Check.fault",
+                "python": "fault",
+                "rust": "fault",
+                "typescript": "fault"
             },
             "files.bytes": {
                 "go": "files.Bytes",
@@ -1254,6 +1283,14 @@
                 "rust": "prop::of_shape",
                 "typescript": "prop.ofShape"
             },
+            "prop.on-result": {
+                "go": "prop.OnResult",
+                "java": "Prop.onResult",
+                "kotlin": "Prop.onResult",
+                "python": "prop.on_result",
+                "rust": "prop::on_result",
+                "typescript": "prop.onResult"
+            },
             "prop.one-of": {
                 "go": "prop.OneOf",
                 "java": "Prop.oneOf",
@@ -1326,6 +1363,14 @@
                 "rust": "prop::require",
                 "typescript": "prop.require"
             },
+            "prop.run-seed": {
+                "go": "prop.RunSeed",
+                "java": "Prop.runSeed",
+                "kotlin": "Prop.runSeed",
+                "python": "prop.run_seed",
+                "rust": "prop::run_seed",
+                "typescript": "prop.runSeed"
+            },
             "prop.sampled-from": {
                 "go": "prop.SampledFrom",
                 "java": "Prop.sampledFrom",
@@ -1397,6 +1442,14 @@
                 "python": "prop.using",
                 "rust": "prop::using",
                 "typescript": "prop.using"
+            },
+            "prop.values": {
+                "go": "prop.Values",
+                "java": "Prop.values",
+                "kotlin": "Prop.values",
+                "python": "prop.values",
+                "rust": "prop::values",
+                "typescript": "prop.values"
             },
             "prop.workers": {
                 "go": "prop.Workers",
@@ -1498,6 +1551,14 @@
                 "java": "Check.that",
                 "kotlin": "Check.that",
                 "typescript": "expect"
+            },
+            "write-record": {
+                "go": "WriteRecord",
+                "java": "Check.writeRecord",
+                "kotlin": "Check.writeRecord",
+                "python": "write_record",
+                "rust": "write_record",
+                "typescript": "writeRecord"
             }
         },
         "members": {
@@ -1548,6 +1609,22 @@
                 "python": "weight",
                 "rust": "weight",
                 "typescript": "weight"
+            },
+            "assertion-call.assertion": {
+                "go": "Assertion",
+                "java": "assertion",
+                "kotlin": "assertion",
+                "python": "assertion",
+                "rust": "assertion",
+                "typescript": "assertion"
+            },
+            "assertion-call.contract": {
+                "go": "Contract",
+                "java": "contract",
+                "kotlin": "contract",
+                "python": "contract",
+                "rust": "contract",
+                "typescript": "contract"
             },
             "call.fail": {
                 "go": "Fail",
@@ -1642,6 +1719,14 @@
                 "python": "rand",
                 "rust": "rand",
                 "typescript": "rand"
+            },
+            "case.skip": {
+                "go": "Skipf",
+                "java": "skip",
+                "kotlin": "skip",
+                "python": "skip",
+                "rust": "skip",
+                "typescript": "skip"
             },
             "case.target": {
                 "go": "Target",
@@ -1921,6 +2006,14 @@
                 "rust": "failures",
                 "typescript": "failures"
             },
+            "recorder-seat.faults": {
+                "go": "Faults",
+                "java": "faults",
+                "kotlin": "faults",
+                "python": "faults",
+                "rust": "faults",
+                "typescript": "faults"
+            },
             "recorder-seat.helper-calls": {
                 "go": "HelperCalls",
                 "java": "helperCalls",
@@ -1953,6 +2046,102 @@
                 "rust": "records",
                 "typescript": "records"
             },
+            "recorder-seat.run-cleanups": {
+                "go": "RunCleanups",
+                "java": "close",
+                "kotlin": "close",
+                "python": "run_cleanups",
+                "rust": "run_cleanups",
+                "typescript": "runCleanups"
+            },
+            "run-result.cases": {
+                "go": "Cases",
+                "java": "cases",
+                "kotlin": "cases",
+                "python": "cases",
+                "rust": "cases",
+                "typescript": "cases"
+            },
+            "run-result.choices": {
+                "go": "Choices",
+                "java": "choices",
+                "kotlin": "choices",
+                "python": "choices",
+                "rust": "choices",
+                "typescript": "choices"
+            },
+            "run-result.counterexample": {
+                "go": "Counterexample",
+                "java": "counterexample",
+                "kotlin": "counterexample",
+                "python": "counterexample",
+                "rust": "counterexample",
+                "typescript": "counterexample"
+            },
+            "run-result.coverage": {
+                "go": "Coverage",
+                "java": "coverage",
+                "kotlin": "coverage",
+                "python": "coverage",
+                "rust": "coverage",
+                "typescript": "coverage"
+            },
+            "run-result.divergence": {
+                "go": "Divergence",
+                "java": "divergence",
+                "kotlin": "divergence",
+                "python": "divergence",
+                "rust": "divergence",
+                "typescript": "divergence"
+            },
+            "run-result.failure": {
+                "go": "Failure",
+                "java": "failure",
+                "kotlin": "failure",
+                "python": "failure",
+                "rust": "failure",
+                "typescript": "failure"
+            },
+            "run-result.others": {
+                "go": "Others",
+                "java": "others",
+                "kotlin": "others",
+                "python": "others",
+                "rust": "others",
+                "typescript": "others"
+            },
+            "run-result.outcome": {
+                "go": "Outcome",
+                "java": "outcome",
+                "kotlin": "outcome",
+                "python": "outcome",
+                "rust": "outcome",
+                "typescript": "outcome"
+            },
+            "run-result.reason": {
+                "go": "Reason",
+                "java": "reason",
+                "kotlin": "reason",
+                "python": "reason",
+                "rust": "reason",
+                "typescript": "reason"
+            },
+            "run-result.rejected": {
+                "go": "Rejected",
+                "java": "rejected",
+                "kotlin": "rejected",
+                "python": "rejected",
+                "rust": "rejected",
+                "typescript": "rejected"
+            },
+            "run-result.seed": {
+                "go": "Seed",
+                "java": "seed",
+                "kotlin": "seed",
+                "python": "seed",
+                "rust": "seed",
+                "typescript": "seed"
+            },
             "scheduler.run": {
                 "go": "Run",
                 "java": "run",
@@ -1981,6 +2170,14 @@
                 "rust": "cancellation",
                 "typescript": "signal"
             },
+            "seat.cleanup": {
+                "go": "Cleanup",
+                "java": "cleanup",
+                "kotlin": "cleanup",
+                "python": "cleanup",
+                "rust": "cleanup",
+                "typescript": "cleanup"
+            },
             "seat.clock": {
                 "go": "Clock",
                 "java": "clock",
@@ -2005,6 +2202,14 @@
                 "rust": "helper",
                 "typescript": "helper"
             },
+            "seat.observe-call": {
+                "go": "ObserveCall",
+                "java": "observeCall",
+                "kotlin": "observeCall",
+                "python": "observe_call",
+                "rust": "observe_call",
+                "typescript": "observeCall"
+            },
             "seat.record": {
                 "go": "Errorf",
                 "java": "record",
@@ -2020,6 +2225,22 @@
                 "python": "report",
                 "rust": "report",
                 "typescript": "report"
+            },
+            "seat.report-fault": {
+                "go": "ReportFault",
+                "java": "reportFault",
+                "kotlin": "reportFault",
+                "python": "report_fault",
+                "rust": "report_fault",
+                "typescript": "reportFault"
+            },
+            "seat.skip": {
+                "go": "Skipf",
+                "java": "skip",
+                "kotlin": "skip",
+                "python": "skip",
+                "rust": "skip",
+                "typescript": "skip"
             },
             "spec.equal": {
                 "go": "Equal",
@@ -2060,6 +2281,14 @@
                 "java": "Assertion",
                 "kotlin": "Assertion",
                 "typescript": "Assertion"
+            },
+            "assertion-call": {
+                "go": "Call",
+                "java": "AssertionCall",
+                "kotlin": "AssertionCall",
+                "python": "Call",
+                "rust": "Call",
+                "typescript": "Call"
             },
             "call": {
                 "go": "history.Call",
@@ -2138,6 +2367,11 @@
                 "rust": "Failure",
                 "typescript": "Failure"
             },
+            "fault-reporter": {
+                "go": "FaultReporter",
+                "java": "FaultReporter",
+                "kotlin": "FaultReporter"
+            },
             "generator": {
                 "go": "prop.Generator",
                 "java": "Generator",
@@ -2161,6 +2395,11 @@
                 "python": "stateful.Machine",
                 "rust": "stateful::Machine",
                 "typescript": "stateful.Machine"
+            },
+            "observer": {
+                "go": "Observer",
+                "java": "Observer",
+                "kotlin": "Observer"
             },
             "operation": {
                 "go": "history.Operation",
@@ -2191,6 +2430,14 @@
                 "java": "Reporter",
                 "kotlin": "Reporter"
             },
+            "run-result": {
+                "go": "prop.Result",
+                "java": "RunResult",
+                "kotlin": "RunResult",
+                "python": "prop.Result",
+                "rust": "prop::RunResult",
+                "typescript": "prop.Result"
+            },
             "scheduler": {
                 "go": "stateful.Scheduler",
                 "java": "Scheduler",
@@ -2214,6 +2461,10 @@
                 "python": "Seat",
                 "rust": "Seat",
                 "typescript": "Seat"
+            },
+            "skipper": {
+                "java": "Skipper",
+                "kotlin": "Skipper"
             },
             "spec": {
                 "go": "history.Spec",
@@ -2256,5 +2507,5 @@
             }
         }
     },
-    "version": "9.0.0"
+    "version": "13.6.0"
 }

@@ -1,5 +1,5 @@
 {
-  "extends": "spec://assertions@9.0.0",
+  "extends": "spec://assertions@13.6.0",
   "language": "java",
   "diverge": [
     {
@@ -35,6 +35,11 @@
   ],
   "limits": [
     {
+      "id": "max-live-bytes",
+      "what": "Reads the heap used of the MemoryMXBean after System.gc, under the Serial, the Parallel and the G1 collector. Under -XX:+DisableExplicitGC, under -XX:+ExplicitGCInvokesConcurrent and under any other collector the call ends with a fault. A test that runs beside the call and keeps memory reachable adds that memory to each reading.",
+      "why": "System.gc runs a full collection that has ended when it returns only under those three collectors without the two flags. With explicit collections off, each reading of a streaming filter contained the garbage of the call, and ZGC reports its heap in pages of 2 MiB."
+    },
+    {
       "id": "no-task-leaks",
       "what": "Sees platform threads and executor threads. A leaked virtual thread is not reported.",
       "why": "Virtual threads appear in no standard enumeration. Thread.getAllStackTraces does not contain them, and ThreadMXBean counts their carrier threads instead, which is noise rather than signal."
@@ -63,12 +68,17 @@
     {
       "id": "cancellation-of",
       "why": "Seat gives cancelled() a default, as it gives helper() one, so a helper calls the member on any seat and needs no function to read it."
+    },
+    {
+      "id": "cleanup",
+      "why": "Seat gives cleanup() a default that ends the call with a fault, as it gives helper() a default, so a helper calls the member on any seat and needs no function to register a cleanup."
     }
   ],
   "sections": ["tasks", "threads"],
   "records": {
     "artifact": "The JUnit Platform's report entries, which a Gradle test task of Gradle 9.4 or later writes to build/test-results/<task>/TEST-<class>.xml, one file per test class. The Open Test Reporting XML of the JUnit Platform contains the same entries.",
-    "location": "One report entry per call record, in the order the calls report their verdicts, written as a property element under the properties element of the test's testcase element. Its name is dokimi.assert.<seq> and its value is the call record's JSON. The testcase element names the test by its classname, the test class, and its name, the test's display name.",
-    "status": "The child of each testcase element: failure for a failed test, skipped for a skipped or aborted one, and none for a pass."
+    "location": "One report entry per record, in the order the records are made, written as a property element under the properties element of the test's testcase element. Its name is the kind of the record followed by the record's number in its test, such as dokimi.assert.3 or dokimi.suite.1, and its value is the record's JSON. The testcase element names the test by its classname, the test class, and its name, the test's display name.",
+    "status": "The child of each testcase element: failure for a failed test, skipped for a skipped or aborted one, and none for a pass.",
+    "kinds": ["dokimi.assert", "dokimi.suite"]
   }
 }

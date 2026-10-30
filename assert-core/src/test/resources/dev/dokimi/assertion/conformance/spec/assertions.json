@@ -379,7 +379,7 @@
                 "got",
                 "total"
             ],
-            "summary": "A callable makes at most a stated number of heap allocations per call. A count calls it once to warm it and counts the allocations of the 100 calls after it. A ceiling of 0 admits one allocation in all, and any other ceiling compares with the average per call, rounded to the nearest whole number, with a half rounded up. A count that exceeds the ceiling is taken again, and the assertion fails when three counts exceed it. got is the rounded average and total the allocations of the count with the lowest total.\n"
+            "summary": "A callable makes at most a stated number of heap allocations per call. A count calls it once to warm it and counts the allocations of the 100 calls after it. A ceiling of 0 admits one allocation in all, and any other ceiling compares with the average per call, rounded to the nearest whole number, with a half rounded up. A count that exceeds the ceiling is taken again, and the assertion fails when ten counts exceed it. got is the rounded average and total the allocations of the count with the lowest total.\n"
         },
         "max-allocs-with-setup": {
             "arity": 4,
@@ -389,6 +389,15 @@
                 "total"
             ],
             "summary": "A callable makes at most a stated number of heap allocations per call on an input that a setup builds before each call. The setup is not counted. A count calls the setup and the callable once to warm both and counts the allocations of the 100 calls after them, with the ceilings, the counts, got and total of max-allocs.\n"
+        },
+        "max-live-bytes": {
+            "arity": 3,
+            "detail_fields": [
+                "want",
+                "got",
+                "probes"
+            ],
+            "summary": "A callable keeps at most a stated number of bytes of the heap reachable at each call of a probe that the assertion hands it. The assertion calls it once with a probe that reads nothing to warm it. A run then collects and reads the live heap, and calls the callable with a probe that collects and reads the live heap at each call. The excess of a run is its largest reading less the first reading, or 0. A run whose excess exceeds the ceiling is taken again, and the assertion fails when ten runs exceed it. got is the smallest excess and probes the calls of the probe in the run of that excess. A callable that calls the probe in no run ends the call with a fault, and so does a run that cannot read the live heap.\n"
         },
         "monotonic": {
             "arity": 4,
@@ -538,7 +547,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -562,7 +572,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -592,7 +603,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -616,7 +628,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -645,7 +658,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -674,7 +688,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -698,7 +713,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -726,7 +742,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -750,7 +767,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -779,7 +797,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -803,7 +822,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -827,7 +847,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -851,7 +872,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -875,7 +897,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -899,7 +922,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -923,10 +947,11 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "package": "prop",
-            "summary": "A body passes for every input a run generates. A run replays the stored failures, tries the simplest input and the boundary inputs, then generates inputs it has not tested until it has run the stated number of cases or tested every input. A fixed sequence of passes shrinks a failing case towards the smallest case that fails the same way.\n"
+            "summary": "A body passes for every input a run generates. A run replays the stored failures, tries the simplest input and the boundary inputs, then generates inputs it has not tested until it has run the stated number of cases or tested every input. A fixed sequence of passes shrinks a failing case towards the smallest case that fails the same way. A case that skips before the run finds a failing case skips the run. A fault that ends a call in a case ends the run in every phase, and the call ends with the same fault.\n"
         },
         "prop-has-prefix": {
             "arity": 3,
@@ -940,7 +965,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -964,7 +990,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -988,7 +1015,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1012,7 +1040,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1036,7 +1065,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1064,7 +1094,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1088,7 +1119,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1112,7 +1144,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1136,7 +1169,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1160,7 +1194,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1184,7 +1219,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1208,7 +1244,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1232,7 +1269,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1261,7 +1299,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1285,7 +1324,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1314,7 +1354,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1338,7 +1379,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1366,7 +1408,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1390,7 +1433,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1414,7 +1458,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1443,7 +1488,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1471,7 +1517,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1499,7 +1546,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1523,7 +1571,8 @@
                 "choices",
                 "others",
                 "divergence",
-                "coverage"
+                "coverage",
+                "reason"
             ],
             "form": {
                 "generates": [
@@ -1550,7 +1599,7 @@
         "rejects": {
             "arity": 2,
             "detail_fields": [],
-            "summary": "A check fails against an implementation it is meant to reject. Yields the failure records of the check, in call order.\n"
+            "summary": "A check fails against an implementation it is meant to reject. Yields the failure records of the check, in call order. A fault that ends the check ends the call with the same fault. A check that skips before it fails ends the call as skipped, which yields no record and skips the test where its runner can skip a running test.\n"
         },
         "round-trip": {
             "arity": 4,
@@ -1574,7 +1623,7 @@
                 "explanation"
             ],
             "package": "history",
-            "summary": "A history of list-append transactions exhibits no anomaly that serializability forbids, among the dependencies its reads reveal: no inconsistent observation, no aborted or intermediate read, and no cycle of write, read and anti-dependencies.\n"
+            "summary": "A history of list-append or read-write register transactions exhibits no anomaly that serializability forbids, among the dependencies its reads reveal: no inconsistent observation, no aborted or intermediate read, and no cycle of write, read and anti-dependencies.\n"
         },
         "snapshot-isolation": {
             "arity": 2,
@@ -1586,7 +1635,7 @@
                 "explanation"
             ],
             "package": "history",
-            "summary": "A history of list-append transactions exhibits no anomaly that snapshot isolation forbids, among the dependencies its reads reveal: no inconsistent observation, no aborted or intermediate read, and no cycle in which no two anti-dependencies are adjacent.\n"
+            "summary": "A history of list-append or read-write register transactions exhibits no anomaly that snapshot isolation forbids, among the dependencies its reads reveal: no inconsistent observation, no aborted or intermediate read, and no cycle in which no two anti-dependencies are adjacent.\n"
         },
         "stable-order": {
             "arity": 2,
@@ -1879,5 +1928,5 @@
             "summary": "Yields two objects, and the value of each is 1.\n"
         }
     },
-    "version": "9.0.0"
+    "version": "13.6.0"
 }
