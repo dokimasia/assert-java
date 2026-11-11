@@ -7,7 +7,7 @@ created: 2026-10-11
 updated: 2026-10-11
 discussion: https://github.com/dokimasia/assert-java/issues/7
 supersedes: none
-superseded-by: none
+superseded-by: RFC-0003, RFC-0004, RFC-0005, RFC-0006 and RFC-0007, in part
 produces-adr: none
 ---
 
