@@ -1,24 +1,24 @@
 ---
 rfc: 0004
-title: The property engine of definition 16.4.0 in Java and Kotlin
+title: The property engine of definition 16.5.0 in Java and Kotlin
 author: Roy Klopper <roy.klopper@stealthscale.io>
 status: Accepted
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-14
 discussion: none
 supersedes: RFC-0002, in part
 superseded-by: none
 produces-adr: none
 ---
 
-# RFC-0004: The property engine of definition 16.4.0 in Java and Kotlin
+# RFC-0004: The property engine of definition 16.5.0 in Java and Kotlin
 
 ## Summary
 
 `Prop` runs a body against generated cases. It shrinks a failing case and
 stores it, as the definition fixes. This proposal designs the engine of the
-JVM at definition 16.4.0. It takes over the section "The property engine"
-of RFC-0002 and adds the rows of definitions 9.0.0 to 16.4.0:
+JVM at definition 16.5.0. It takes over the section "The property engine"
+of RFC-0002 and adds the rows of definitions 9.0.0 to 16.5.0:
 
 | Change | Java API |
 |---|---|
@@ -32,6 +32,7 @@ of RFC-0002 and adds the rows of definitions 9.0.0 to 16.4.0:
 | A run replays a failing case n times before the shrink | `Prop.replays`, `RunResult.replays` and `RunResult.reproduced` |
 | A stored case replays its counterexample, steps included | store entries of format 2 |
 | A trace replays a composite after the entries of its draws | `Prop.draws` |
+| A trace replays a draw through a composite after the entries of the composite's draws | `Prop.draws` |
 
 The property forms, the generators and the options keep the names of the
 naming table. The engine depends on the foundation of RFC-0003 and on the
@@ -40,7 +41,7 @@ recording of a history of RFC-0005, because `Case.history` returns one.
 ## Motivation
 
 Every vector family of the property engine pins a rule that the JVM does not
-implement yet: 452 property vectors at 16.4.0, in 14 kinds from `behaviour`
+implement yet: 452 property vectors at 16.5.0, in 14 kinds from `behaviour`
 to `token`. The engine also comes before the machines, because a machine's
 steps are choices of a case. Its rules are fixed: the source, the decoding
 of each generator, the shrink passes, the token and the store are the same
@@ -157,6 +158,16 @@ public record RunResult(
   steps first. A draw of a composite takes no entry when it starts. Its
   draws take theirs, and the composite then takes its own entry by its
   label.
+- **Draws through a composite.** A draw of a one-of, an optional, a list, a
+  dict, a filter or a recursive with a composite inside takes the first
+  draw entry with its label up to the next step entry. Its value runs
+  backwards with a placeholder for each composite, which does not make a
+  choice. When the value runs backwards through a composite, the draws of
+  the composite take the entries before it, and the draw takes the entry
+  once it decodes. A one-of and a recursive take a branch through a
+  composite only when no other branch produces the value. A filter does
+  not test the value of a composite, a unique list does not compare it,
+  and a dict through a composite refuses its entry.
 - **Its report.** `Prop.forAll` aborts only, so it reports through `fail`.
 
 `Prop.fuzz` replays the stored cases and the seed files on the seat, and
@@ -250,4 +261,5 @@ Go's `prop.Cases` is a helper. Varargs keep a call of one option short.
 | The replays of a failing case | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0057-the-replays-of-a-failing-case.md> |
 | The steps of a stored case | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0060-the-steps-of-a-stored-case.md> |
 | A composite in a trace | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0061-a-composite-in-a-trace.md> |
+| A draw through a composite in a trace | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0062-a-draw-through-a-composite-in-a-trace.md> |
 | The JVM design of definition 8.0.0 | [RFC-0002](0002-definition-8-in-java-and-kotlin.md) |

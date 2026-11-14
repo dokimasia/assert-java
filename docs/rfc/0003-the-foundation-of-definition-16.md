@@ -1,30 +1,30 @@
 ---
 rfc: 0003
-title: The foundation of definition 16.4.0 in Java and Kotlin
+title: The foundation of definition 16.5.0 in Java and Kotlin
 author: Roy Klopper <roy.klopper@stealthscale.io>
 status: Accepted
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-14
 discussion: none
 supersedes: RFC-0002, in part
 superseded-by: none
 produces-adr: none
 ---
 
-# RFC-0003: The foundation of definition 16.4.0 in Java and Kotlin
+# RFC-0003: The foundation of definition 16.5.0 in Java and Kotlin
 
 ## Summary
 
 The foundation is the code that every subsystem of the library calls: JSON,
 typed literals, call records, verdicts, the failure record, the seats and
-the relations. This proposal designs it at definition 16.4.0. RFC-0004 to
+the relations. This proposal designs it at definition 16.5.0. RFC-0004 to
 RFC-0007 design the property engine, the histories, the machines and the
 trees of files on top of it.
 
 RFC-0002 proposed the same parts at definition 8.0.0. This proposal takes
 over its sections on JSON, equality, the failure record, call records, the
 seat, relations and the bench contract, and adds the rows of definitions
-9.0.0 to 16.4.0:
+9.0.0 to 16.5.0:
 
 | Change | Java API |
 |---|---|
@@ -42,7 +42,7 @@ seat, relations and the bench contract, and adds the rows of definitions
 CI has failed since the commit that vendored definition 15.0.0. The test
 `DefinitionTest` checks that every surface id of the naming table is
 offered or declined, and it fails on each id that the library lacks, from
-`action` onwards. The naming table of 16.4.0 has 323 rows and 320 Java
+`action` onwards. The naming table of 16.5.0 has 323 rows and 320 Java
 names. The library implements the assertions of definition 1.1.0.
 
 The foundation comes first, at the version that the subsystems target,
@@ -160,8 +160,8 @@ collectors that the overlay of Java names. The overlay states the limit.
 ### Version
 
 Every call record states the version of the vendored copy. The library
-vendors 16.4.0 at the start of the first milestone of the roadmap, so each
-milestone runs the vectors of 16.4.0. The completeness gate passes at the
+vendors 16.5.0 at the start of the first milestone of the roadmap, so each
+milestone runs the vectors of 16.5.0. The completeness gate passes at the
 last milestone, once every row has an implementation or a declination.
 
 ### Invariants

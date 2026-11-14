@@ -1,23 +1,23 @@
 ---
 rfc: 0007
-title: Trees of files of definition 16.4.0 in Java and Kotlin
+title: Trees of files of definition 16.5.0 in Java and Kotlin
 author: Roy Klopper <roy.klopper@stealthscale.io>
 status: Accepted
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-14
 discussion: none
 supersedes: RFC-0002, in part
 superseded-by: none
 produces-adr: none
 ---
 
-# RFC-0007: Trees of files of definition 16.4.0 in Java and Kotlin
+# RFC-0007: Trees of files of definition 16.5.0 in Java and Kotlin
 
 ## Summary
 
 A test states a tree of files as a value and writes it into a directory of
 its own. It then compares a directory with a stated tree or a golden tree.
-This proposal designs the files package of the JVM at definition 16.4.0. It
+This proposal designs the files package of the JVM at definition 16.5.0. It
 takes over the section "Trees of files and golden trees" of RFC-0002:
 
 | Change | Java API |

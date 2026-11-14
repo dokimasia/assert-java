@@ -1,25 +1,25 @@
 ---
 rfc: 0005
-title: Histories of definition 16.4.0 in Java and Kotlin
+title: Histories of definition 16.5.0 in Java and Kotlin
 author: Roy Klopper <roy.klopper@stealthscale.io>
 status: Accepted
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-14
 discussion: none
 supersedes: RFC-0002, in part
 superseded-by: none
 produces-adr: none
 ---
 
-# RFC-0005: Histories of definition 16.4.0 in Java and Kotlin
+# RFC-0005: Histories of definition 16.5.0 in Java and Kotlin
 
 ## Summary
 
 A test records the calls of concurrent clients in a `History`, and three
 checks decide whether the history is linearizable, serializable or has
 snapshot isolation. This proposal designs the history package of the JVM at
-definition 16.4.0. It takes over the section "Histories" of RFC-0002 and
-adds the rows and the rules of definitions 9.0.0 to 16.4.0:
+definition 16.5.0. It takes over the section "Histories" of RFC-0002 and
+adds the rows and the rules of definitions 9.0.0 to 16.5.0:
 
 | Change | Java API |
 |---|---|
@@ -35,7 +35,7 @@ RFC-0004 depends on it, because `Case.history` returns a `History`.
 
 ## Motivation
 
-The definition pins each check with 112 history vectors at 16.4.0, in the
+The definition pins each check with 112 history vectors at 16.5.0, in the
 kinds `linearizable`, `serializable`, `snapshot-isolation` and `seam`. The
 search of a linearizability check is fixed step by step, so the vectors
 state the steps of a check, its frontier and its candidates. Without the

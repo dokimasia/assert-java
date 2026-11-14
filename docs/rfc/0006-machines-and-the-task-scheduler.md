@@ -1,17 +1,17 @@
 ---
 rfc: 0006
-title: Machines and the task scheduler of definition 16.4.0 in Java and Kotlin
+title: Machines and the task scheduler of definition 16.5.0 in Java and Kotlin
 author: Roy Klopper <roy.klopper@stealthscale.io>
 status: Accepted
 created: 2026-11-11
-updated: 2026-11-11
+updated: 2026-11-14
 discussion: none
 supersedes: RFC-0002, in part
 superseded-by: none
 produces-adr: none
 ---
 
-# RFC-0006: Machines and the task scheduler of definition 16.4.0 in Java and Kotlin
+# RFC-0006: Machines and the task scheduler of definition 16.5.0 in Java and Kotlin
 
 ## Summary
 
@@ -19,8 +19,8 @@ produces-adr: none
 checks the history of the steps against the machine's spec. Its decisions
 are choices of the case, so a failing sequence of steps replays and
 shrinks. This proposal designs the machines and the task scheduler of the
-JVM at definition 16.4.0. It takes over the section "Machines and the task
-scheduler" of RFC-0002 and adds the rows of definitions 9.0.0 to 16.4.0:
+JVM at definition 16.5.0. It takes over the section "Machines and the task
+scheduler" of RFC-0002 and adds the rows of definitions 9.0.0 to 16.5.0:
 
 | Change | Java API |
 |---|---|
@@ -31,14 +31,15 @@ scheduler" of RFC-0002 and adds the rows of definitions 9.0.0 to 16.4.0:
 | A run or an advance fails at a limit of releases | `Stateful.maxReleases` |
 | An action that every case keeps | `Action.keep` |
 | The steps of a stored case | store entries of format 2, through RFC-0004 |
+| An input drawn through a composite in a trace | `Prop.draws`, through RFC-0004 |
 
 The package depends on the property engine of RFC-0004 and on the histories
 of RFC-0005.
 
 ## Motivation
 
-The definition pins the machines with 29 machines vectors at 16.4.0, over
-13 machine subjects. Five of the subjects spawn tasks of their own on a
+The definition pins the machines with 36 machines vectors at 16.5.0, over
+15 machine subjects. Five of the subjects spawn tasks of their own on a
 scheduler of the case: a flusher that waits for a write, a ticker that
 sleeps on the clock of its scheduler, and a task that spins until a flag is
 set. A Java task runs on a thread of its own, so a task can block in a wait
@@ -248,4 +249,5 @@ other instants.
 | Tasks that wait and sleep under the task scheduler | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0056-tasks-that-wait-and-sleep.md> |
 | An action that every case keeps | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0059-an-action-that-every-case-keeps.md> |
 | The steps of a stored case | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0060-the-steps-of-a-stored-case.md> |
+| A draw through a composite in a trace | <https://github.com/dokimasia/assert-spec/blob/main/docs/rfc/0062-a-draw-through-a-composite-in-a-trace.md> |
 | The JVM design of definition 8.0.0 | [RFC-0002](0002-definition-8-in-java-and-kotlin.md) |
